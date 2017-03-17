@@ -15,10 +15,12 @@ end
 function grad!(p::Problem)
     if p._grad == nothing
         egrad = p.egrad
+    end
 # TODO: figure out how manifolds work
 # can do this without using the gradient!
 #        grad(x) = p.manifold.egrad2rgrad(x, egrad(x))
-        self._grad = grad
+#        self._grad = grad
+end
 
 function hess!(p::Problem)
     if p._hess == nothing
