@@ -49,12 +49,14 @@ end
 function retr!(s::Sphere, X, U)
     Y = X + U
     return _normalize(s,Y)
+end
 
 function log!(s::Sphere, X, Y)
     P = proj(s,X,Y-X)
     distance = dist(s,X,Y)
     if dist > 1e-6
         P *= distance / norm(s,nothing,P)
+    end
     return P
 end
 
