@@ -1,4 +1,4 @@
-using ForwardDiff
+#using ForwardDiff
 
 # TODO: Figure out how none checking works in julia
 
@@ -16,6 +16,7 @@ function grad!(p::Problem)
     if p._grad == nothing
         egrad = p.egrad
     end
+    return nothing
 # TODO: figure out how manifolds work
 # can do this without using the gradient!
 #        grad(x) = p.manifold.egrad2rgrad(x, egrad(x))
@@ -23,11 +24,12 @@ function grad!(p::Problem)
 end
 
 function hess!(p::Problem)
-    if p._hess == nothing
-        ehess = ForwardDiff.hessian(p.manifold)
+    return nothing
+#    if p._hess == nothing
+#        ehess = ForwardDiff.hessian(p.manifold)
 # TODO: compute hessian
     #        hess(x, a) = self.manifold.ehess2rhess(x, self.egrad(x), ehess(x, a), a)
 #        self._hess = hess
-    end
+#    end
 #    return self._hess
 end
