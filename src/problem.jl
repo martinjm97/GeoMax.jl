@@ -27,5 +27,5 @@ function hess!(p::Problem)
     #        hess(x, a) = self.manifold.ehess2rhess(x, self.egrad(x), ehess(x, a), a)
 #        self._hess = hess
     end
-    return self._hess
+#    return self._hess
 end
