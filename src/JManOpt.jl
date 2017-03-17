@@ -1,6 +1,6 @@
 module JManOpt
 
-include("sphere.jl")
+include("manifold/sphere.jl")
 include("problem.jl")
 
 end
