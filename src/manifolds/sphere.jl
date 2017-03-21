@@ -5,9 +5,6 @@ struct Sphere{} <: AbstractManifold
     n::Int
 end
 
-# TODO consider s<: AbstractManifold instead
-# with if s::Sphere
-
 function dim!(s::Sphere)
     return length(s) - 1
 end
@@ -30,11 +27,11 @@ function dist!(s::Sphere, U, V)
 end
 
 function proj!(s::Sphere, X, H)
-    return H - self.inner(s,nothing, X, H) * X
+    return H - s.inner(s,nothing, X, H) * X
 end
 
 function ehess2rhess!(s::Sphere, X, egrad, ehess, U)
-    return self.proj(s,X,ehess) - self.inner(s,nothing, X, egrad) * U
+    return s.proj(s,X,ehess) - s.inner(s,nothing, X, egrad) * U
 end
 
 function exp!(s::Sphere, X, U)
@@ -48,7 +45,7 @@ end
 
 function retr!(s::Sphere, X, U)
     Y = X + U
-    return _normalize(s,Y)
+    return s._normalize(s,Y)
 end
 
 function log!(s::Sphere, X, Y)
@@ -62,13 +59,13 @@ end
 
 function rand!(s::Sphere)
     Y = randn(s.m,s.n)
-    return self._normalize(Y)
+    return s._normalize(Y)
 end
 
 function randvec!(s::Sphere,X)
     H = randn(s.m, s.n)
     P = proj(s,X,H)
-    return self._normalize(P)
+    return s._normalize(P)
 end
 
 
