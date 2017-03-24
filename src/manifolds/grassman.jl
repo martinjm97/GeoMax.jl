@@ -1,4 +1,4 @@
-struct Grassmann{} <: AbstractManifold
+struct Grassmann <: AbstractManifold
     m::Int
     n::Int
     k::Int

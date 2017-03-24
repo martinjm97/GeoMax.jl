@@ -1,4 +1,4 @@
-struct Oblique{} <: AbstractManifold
+struct Oblique <: AbstractManifold
     m::Int
     n::Int
 end

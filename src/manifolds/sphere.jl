@@ -1,40 +1,33 @@
+# maybe in the future add not supported on this type instead of error
 abstract type AbstractManifold end
 
-struct Sphere{} <: AbstractManifold
+struct Sphere <: AbstractManifold
     m::Int
     n::Int
 end
 
-function dim!(s::Sphere)
-    return length(s) - 1
-end
+ #TODO FIX!
+dim(s::Sphere) = length(s) - 1
 
-function typicaldist!(s::Sphere)
-    return pi
-end
+typicaldist(s::Sphere) = pi
 
-function inner!(s::Sphere, X, U, V)
-    return Float(dot(U,V))
-end
+inner(s::Sphere, X, U, V) = dot(U,V)
 
-function norm!(s::Sphere, X, U)
-    return norm(U)
-end
+norm(s::Sphere, X, U) = norm(U)
 
-function dist!(s::Sphere, U, V)
+
+function dist(s::Sphere, U, V)
     inner_prod = max(min(inner(s,nothing, U, V), 1), -1)
     return acos(inner_prod)
 end
 
-function proj!(s::Sphere, X, H)
-    return H - s.inner(s,nothing, X, H) * X
+proj(s::Sphere, X, H) = H - inner(s,nothing, X, H) * X
+
+function ehess2rhess(s::Sphere, X, egrad, ehess, U)
+    return proj(s,X,ehess) - inner(s,nothing, X, egrad) * U
 end
 
-function ehess2rhess!(s::Sphere, X, egrad, ehess, U)
-    return s.proj(s,X,ehess) - s.inner(s,nothing, X, egrad) * U
-end
-
-function exp!(s::Sphere, X, U)
+function exp(s::Sphere, X, U)
     norm_U = norm(s,nothing,U)
     if norm_U > 1e-3
         return X * cos(norm_U) + U * sin(norm_U) / norm_U
@@ -43,12 +36,9 @@ function exp!(s::Sphere, X, U)
     end
 end
 
-function retr!(s::Sphere, X, U)
-    Y = X + U
-    return s._normalize(s,Y)
-end
+retr(s::Sphere, X, U) = _normalize(s, X + U)
 
-function log!(s::Sphere, X, Y)
+function log(s::Sphere, X, Y)
     P = proj(s,X,Y-X)
     distance = dist(s,X,Y)
     if dist > 1e-6
@@ -57,29 +47,19 @@ function log!(s::Sphere, X, Y)
     return P
 end
 
-function rand!(s::Sphere)
-    Y = randn(s.m,s.n)
-    return s._normalize(Y)
-end
+rand(s::Sphere) = _normalize(randn(s.m,s.n))
 
-function randvec!(s::Sphere,X)
+function randvec(s::Sphere,X)
     H = randn(s.m, s.n)
     P = proj(s,X,H)
-    return s._normalize(P)
+    return _normalize(P)
 end
 
+transp(s::Sphere, X, Y, U) = proj(s, Y, U)
 
-function transp!(s::Sphere, X, Y, U)
-    return proj(s, Y, U)
-end
+pairmean(s::Sphere, X, Y) = _normalize(s, X + Y)
 
-function pairmean!(s::Sphere, X, Y)
-    return _normalize(s, X + Y)
-end
-
-function _normalize!(s::Sphere, X)
-    return X / norm(s,nothing, X)
-end
+_normalize(s::Sphere, X) = X / norm(s,nothing, X)
 
 
 # TODO SphereSubspaceComplementIntersection at the bottom of sphere.py

@@ -1,45 +1,43 @@
-# TODO consider doing it with pycall and einsum
-# how to einsum
-using Einsum
+# MAKE one line functions FOR STYLE
 
-function multiprod(A::Array, B::Array)
-    if length(size(A)) == 2
-        return dot(A, B)
-    end
+# TODO write manually
+
+multiprod(A::AbstractMatrix, B::AbstractMatrix) = dot(A,B)
+# macroexpand(@einsum)
+function multiprod(A::AbstractArray{<:Number,3}, B::AbstractArray{<:Number, 3})
     # np.einsum('ijk,ikl->ijl', A, B)
-    @einsum X[i,j,l] = A[i,j,k]*B[i,k,l]
+    @einsum X[i,j,l] := A[i,j,k]*B[i,k,l]
     return X
 end
 
-function multitransp(A::Array)
-    if ndims(A) == 2:
+#todo rewrite witH ::AbstractMatrix
+function multitransp(A)
+    if ndims(A) == 2
         return transpose(A)
+    end
     return permutedims(A, [1, 3, 2])
 end
 
-function multisym(A::Array)
+function multisym(A)
     return 0.5 * (A + multitransp(A))
 end
 
-function multieye(k::Int,n::Int)
+function multieye(k,n)
     return repeat(eye(n), (k, 1, 1))
 end
 
-# TODO check if required to type cast to pos def and hermetian respectively
-function multilog(A::Array)
-    if !LinAlg.isposdef(A)
-        throw("not implemented")
-    end
-    l, v = Linalg.eig(A)
+# TODO maybe do type checking of matrices.
+function multilog(A)
+    @assert LinAlg.issymmetric(A) "not implemented"
+    @assert LinAlg.isposdef(A) "not implemented"
+    l, v = Linalg.eig(Hermetian(A))
     l =  reshape(log.(l), (size(l)...,1))
-    return multiprod(v, l * multitransp(v))
+    return multiprod(v, l * multitransp(v)
 end
 
-function multiexp(A::Array)
-    if !LinAlg.issymmetric(A)
-        throw("not implemented")
-    end
-    l, v = Linalg.eig(A)
+function multiexp(A)
+    @assert LinAlg.issymmetric(A) "not implemented"
+    l, v = Linalg.eig(Hermetian(A))
     l =  reshape(exp.(l), (size(l)...,1))
     return multiprod(v, l * multitransp(v))
 end

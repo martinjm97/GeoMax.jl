@@ -1,4 +1,4 @@
 # TODO add undefined number of args
-struct Euclidean{} <: AbstractManifold
+struct Euclidean <: AbstractManifold
 
 end
