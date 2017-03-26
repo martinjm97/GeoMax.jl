@@ -1,24 +1,31 @@
-# MAKE one line functions FOR STYLE
-
-# TODO write manually
-
 multiprod(A::AbstractMatrix, B::AbstractMatrix) = dot(A,B)
-# macroexpand(@einsum)
+
 function multiprod(A::AbstractArray{<:Number,3}, B::AbstractArray{<:Number, 3})
-    # np.einsum('ijk,ikl->ijl', A, B)
-    @einsum X[i,j,l] := A[i,j,k]*B[i,k,l]
+    # Einstein contraction 'ijk,ikl->ijl'
+    X = Array{Any}(size(A,1), size(A,2), size(B,3))
+    for r = 1:size(B,3)
+        for j = 1:size(A,2)
+            for i = 1:size(A,1)
+                s = 0
+                for k = 1:size(A,3)
+                    s += A[i,j,k] * B[i,k,r]
+                end
+                X[i,j,r] = s
+            end
+        end
+    end
     return X
 end
 
-#todo rewrite witH ::AbstractMatrix
-function multitransp(A)
+# TODO rewrite witH ::AbstractMatrix
+function multitransp(A::AbstractArray)
     if ndims(A) == 2
-        return transpose(A)
+        return A'
     end
     return permutedims(A, [1, 3, 2])
 end
 
-function multisym(A)
+function multisym(A::AbstractArray)
     return 0.5 * (A + multitransp(A))
 end
 
@@ -27,15 +34,15 @@ function multieye(k,n)
 end
 
 # TODO maybe do type checking of matrices.
-function multilog(A)
+function multilog(A::AbstractArray)
     @assert LinAlg.issymmetric(A) "not implemented"
     @assert LinAlg.isposdef(A) "not implemented"
     l, v = Linalg.eig(Hermetian(A))
     l =  reshape(log.(l), (size(l)...,1))
-    return multiprod(v, l * multitransp(v)
+    return multiprod(v, l * multitransp(v))
 end
 
-function multiexp(A)
+function multiexp(A::AbstractArray)
     @assert LinAlg.issymmetric(A) "not implemented"
     l, v = Linalg.eig(Hermetian(A))
     l =  reshape(exp.(l), (size(l)...,1))

@@ -1,5 +1,6 @@
-# TODO Check that initialization is valid (legal values of k)
 struct Stiefel <: AbstractManifold
+    @assert n >= p & p >= 1 "Need n >= p >= 1."
+    @assert k >= 1 "k must be greater than or equal to 1"
     n::Int
     p::Int
     k::Int
@@ -15,30 +16,39 @@ inner(s::Stiefel, X, G, H) = dot(G,H)
 norm(s::Stiefel, X, G) =  norm(G)
 
 function dist(s::Stiefel, U, V)
-    throw("not implemented")
+    @assert false "not implemented"
 end
 
-# TODO create multi implementations in proj nd ehess2rhess
-# fix the 3 functions below
 function proj(s::Stiefel, X, U)
-    throw("not implemented")
-    return U - X * (permutedims(X) * U)
+    return U - multiprod(X, multisym(multiprod(multitransp(X), U)))
 end
 
 egrad2rgrad = proj
 
-function ehess2rhess(s::Stiefel, X, egrad, ehess, U)
-    throw("not implemented")
-    return proj(s,X,ehess) - inner(s,nothing, X, egrad) * U
+function ehess2rhess(s::Stiefel, X, egrad, ehess, H)
+    XtG = multiprod(multitransp(X), egrad)
+    symXtG = multisym(XtG)
+    HsymXtG = multiprod(H, symXtG)
+    return proj(s, X, ehess - HsymXtG)
 end
 
+# TODO check exp works 
 function exp(s::Stiefel, X, U)
-    norm_U = norm(s,nothing,U)
-    if norm_U > 1e-3
-        return X * cos(norm_U) + U * sin(norm_U) / norm_U
-    else
-        return retr(s,U)
-    end
+    if s.k == 1
+        m1 = hcat(dot(U, X'), - dot(U, U'))
+        m2 = hcat(eye(s.p), dot(U, X'))
+        W = expm(vcat(m1,m2))
+        Z = vcat(expm(-dot(U,X')), zeros(s.p, s.p))
+        Y = dot(dot(vcat(X, U), W), Z)
+     else:
+         Y = zeros(size(X))
+         for i=1:s.k:
+             m1 = hcat(dot(U[i], X[i]'), - dot(U[i], U[i]'))
+             m2 = hcat(eye(s.p), dot(U[i], X[i]')))
+             W = expm(vcat(m1, m2)
+             Z = vcat(expm(-dot(U[i], X[i]')), zeros(s.p, s.p))
+             Y[i] = dot(dot(vcat(X[i], U[i]), W), Z)
+     return Y
 end
 
 function retr(s::Stiefel, X, G)
@@ -56,7 +66,7 @@ function retr(s::Stiefel, X, G)
 end
 
 function log(s::Stiefel, X, Y)
-    throw("not implemented")
+    @assert false "not implemented"
 end
 
 function rand(s::Stiefel)
@@ -69,6 +79,7 @@ function rand(s::Stiefel)
     X = zeros(s.k, s.n, s.p)
     for i in eachindex(s.k)
         X[i], r = qr(randn(s.n, s.p))
+    end
     return X
 end
 
@@ -84,5 +95,5 @@ function transp(s::Stiefel, x1, x2, d)
 end
 
 function pairmean(s::Stiefel, X, Y)
-    throw("not implemented")
+    @assert false "not implemented"
 end

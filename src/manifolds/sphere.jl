@@ -1,13 +1,11 @@
-# maybe in the future add not supported on this type instead of error
+# maybe in the future add not supported on this type instead of error for unsupported functions
 abstract type AbstractManifold end
 
 struct Sphere <: AbstractManifold
-    m::Int
-    n::Int
+    d::Vector{Int}
 end
 
- #TODO FIX!
-dim(s::Sphere) = length(s) - 1
+dim(s::Sphere) = prod(s.d) - 1
 
 typicaldist(s::Sphere) = pi
 
@@ -47,10 +45,10 @@ function log(s::Sphere, X, Y)
     return P
 end
 
-rand(s::Sphere) = _normalize(randn(s.m,s.n))
+rand(s::Sphere) = _normalize(randn(s.d...))
 
 function randvec(s::Sphere,X)
-    H = randn(s.m, s.n)
+    H = randn(s.d...)
     P = proj(s,X,H)
     return _normalize(P)
 end
