@@ -32,7 +32,7 @@ function ehess2rhess(s::Stiefel, X, egrad, ehess, H)
     return proj(s, X, ehess - HsymXtG)
 end
 
-# TODO check exp works 
+# TODO check exp works
 function exp(s::Stiefel, X, U)
     if s.k == 1
         m1 = hcat(dot(U, X'), - dot(U, U'))
@@ -42,7 +42,7 @@ function exp(s::Stiefel, X, U)
         Y = dot(dot(vcat(X, U), W), Z)
      else:
          Y = zeros(size(X))
-         for i=1:s.k:
+         for i=1:s.k
              m1 = hcat(dot(U[i], X[i]'), - dot(U[i], U[i]'))
              m2 = hcat(eye(s.p), dot(U[i], X[i]')))
              W = expm(vcat(m1, m2)
