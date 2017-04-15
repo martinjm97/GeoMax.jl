@@ -1,89 +1,91 @@
 struct Grassmann <: AbstractManifold
-    @assert n >= p | p >= 1 "Need n >= p >= 1."
-    @assert k >= 1 "Need k >= 1"
     n::Int
     p::Int
     k::Int
+    function Grassmann(n::Int, p::Int, k::Int)
+        @assert n >= p | p >= 1 "Need n >= p >= 1"
+        @assert k >= 1 "Need k >= 1"
+        return new(n, p, k)
+    end
 end
-Grassman(m,n) = Grassman(m,n,1)
+Grassmann(m,n) = Grassmann(m,n,1)
 
+dim(s::Grassmann) = s.k*(s.n * s.p - s.p^2)
 
-dim(s::Grassman) = s.k*(s.n * s.p - s.p^2)
+typicaldist(s::Grassmann) = sqrt(s.p, s.k)
 
-typicaldist(s::Grassman) = sqrt(s.p, s.k)
+inner(s::Grassmann, X, U, V) = full_tensor_dot(U,V)
 
-# TODO figure out tensordot
-inner(s::Grassman, X, U, V) = dot(U,V)
+Base.norm(s::Grassmann, X, U) = norm(U)
 
-norm(s::Grassman, X, U) = norm(U)
-
-
-function dist(s::Grassman, X, Y)
+function dist(s::Grassmann, X, Y)
     u, s, v = svd(multiprod(multitransp(X), Y))
-    s[s > 1] = 1
+    s[s .> 1] = 1
     s = acos(s)
     return norm(s)
 end
 
-proj(s::Grassman, X, U) = U - multiprod(X, multiprod(multitransp(X), U))
+proj(s::Grassmann, X, U) = U - multiprod(X, multiprod(multitransp(X), U))
 
 egrad2rgrad = proj
 
-function ehess2rhess(s::Grassman, X, egrad, ehess, H)
+function ehess2rhess(s::Grassmann, X, egrad, ehess, H)
     PXehess = proj(s, X, ehess)
     XtG = multiprod(multitransp(X), egrad)
     HXtG = multiprod(H, XtG)
     return PXehess - HXtG
 end
 
-# TODO fix this
-function exp(s::Grassman, X, U)
-    norm_U = norm(s,nothing,U)
-    if norm_U > 1e-3
-        return X * cos(norm_U) + U * sin(norm_U) / norm_U
-    else
-        return retr(s,U)
+function Base.exp(s::Grassmann, X, U)
+    u, s, vt = svd(U)
+    cos_s = reshape(cos(s), size(s)[1:(end-1)]...,1,size(s)[end])
+    sin_s = reshape(sin(s), size(s)[1:(end-1)]...,1,size(s)[end])
+
+    Y = (multiprod(multiprod(X, multitransp(vt) * cos_s), vt) +
+         multiprod(u * sin_s, vt))
+    for i in 1:s.k
+        Y[i], unused = qr(Y[i])
     end
+    return Y
 end
 
-function retr(s::Grassman, X, G)
+function retr(s::Grassmann, X, G)
     u, s, vt = svd(X + G, full_matrices=False)
     return multiprod(u, vt)
 end
 
-# TODO fix this
-function log(s::Grassman, X, Y)
+function Base.log(s::Grassmann, X, Y)
     ytx = multiprod(multitransp(Y), X)
     At = multitransp(Y) - multiprod(ytx, multitransp(X))
-    #Bt = np.linalg.solve(ytx, At)
-    #u, s, vt = svd(multitransp(Bt))
-    # arctan_s = np.expand_dims(atan(s), -2)
+    Bt = ytx\At
+    u, s, vt = svd(multitransp(Bt))
+    arctan_s = reshape(atan(s), size(s)[1:(end-1)...,1,size(s)[end]])
 
     U = multiprod(u * arctan_s, vt)
     return U
 end
 
-# TODO check if can vectorize qr
-# then combine two parts into 1
-function rand(s::Grassman)
+function rand(s::Grassmann)
     if s.k == 1
         X = randn(s.n, s.p)
         q, r = qr(X)
         return q
-
+    end
+    
     X = zeros(s.k, s.n, s.p)
 
     for i in 1:s.k
         X[i], r = qr(randn(s.n, s.p))
+    end
     return X
 end
 
-function randvec(s::Grassman,X)
-    U = randn(*size(X))
+function randvec(s::Grassmann,X)
+    U = randn(size(X)...)
     U = proj(s, X, U)
     return  U / norm(U)
 end
 
-transp(s::Grassman, X, Y, U) = proj(s, Y, U)
+transp(s::Grassmann, X, Y, U) = proj(s, Y, U)
 
-pairmean(s::Grassman, X, Y) = @assert false "Not implemented"
+pairmean(s::Grassmann, X, Y) = @assert false "Not implemented"

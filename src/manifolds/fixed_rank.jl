@@ -4,56 +4,123 @@ struct FixedRank <: AbstractManifold
     k::Int
 end
 
-dim(s::FixedRank) = prod(s.d) - 1
+dim(s::FixedRank) = (s.m + s.n - s.k) * s.k
 
-typicaldist(s::FixedRank) = pi
+typicaldist(s::FixedRank) = dim(s)
 
-inner(s::FixedRank, X, U, V) = dot(U,V)
+inner(s::FixedRank, X, G, H) = sum(tensor_double_dot(a, b) for (a, b) in zip(G, H))
 
-norm(s::FixedRank, X, U) = norm(U)
+Base.norm(s::FixedRank, X, G) = sqrt(inner(s, X, G, G))
 
+dist(s::FixedRank, U, V) = @assert false "not implemented"
 
-function dist(s::FixedRank, U, V)
-    inner_prod = max(min(inner(s,nothing, U, V), 1), -1)
-    return acos(inner_prod)
+_apply_ambient(s::FixedRank, Z::Tuple, W) = dot(Z[1], dot(Z[2], dot(Z[3].T, W)))
+
+_apply_ambient(s::FixedRank, Z, W) = dot(Z, W)
+
+_apply_ambient_transpose(s::FixedRank, Z::Tuple, W) = dot(Z[3], dot(Z[2], dot(Z[1]', W)))
+
+_apply_ambient_transpose(s::FixedRank, Z, W) = dot(Z', W)
+
+function proj(s::FixedRank, X, Z)
+    ZV = _apply_ambient(s, Z, X[3]')
+    UtZV = dot(X[1]', ZV)
+    ZtU = _apply_ambient_transpose(s, Z, X[1])
+
+    Up = ZV - dot(X[1], UtZV)
+    M = UtZV
+    Vp = ZtU - dot(X[3]', UtZV')
+
+    return _TangentVector((Up, M, Vp))
 end
 
-proj(s::FixedRank, X, H) = H - inner(s,nothing, X, H) * X
+function egrad2grad(s::FixedRank, X, egrad)
+    utdu = dot(x[1]', egrad[1])
+    uutdu = dot(x[1], utdu)
+    Up = (egrad[1] - uutdu) / x[2]
 
-function ehess2rhess(s::FixedRank, X, egrad, ehess, U)
-    return proj(s,X,ehess) - inner(s,nothing, X, egrad) * U
+    vtdv = dot(x[3], egrad[3]')
+    vvtdv = dot(x[3]', vtdv)
+    Vp = (egrad[3]' - vvtdv) / x[2]
+
+    i = eye(s.k)
+    extended_x = reshape(x[2],(1,size(x[2])...))
+    f = 1 / (extended_x^2 - extended_x^2 + i)
+
+    M = (f * (utdu - utdu.T) * x[2] + extended_x * f * (vtdv - vtdv') + diag(egrad[2]))
+
+    return _TangentVector((Up, M, Vp))
 end
 
-function exp(s::FixedRank, X, U)
-    norm_U = norm(s,nothing,U)
-    if norm_U > 1e-3
-        return X * cos(norm_U) + U * sin(norm_U) / norm_U
-    else
-        return retr(s,U)
-    end
+ehess2rhess(s::FixedRank, X, egrad, ehess, U) = @assert false "not implemented"
+
+Base.exp(s::FixedRank, X, Y) = @assert false "not implemented"
+
+function retr(s::FixedRank, X, U)
+    Qu, Ru = qr(Z[1])
+    Qv, Rv = qr(Z[3])
+
+    T = vcat(hcat(diag(X[2]) + Z[2], Rv.T), hcat(Ru, zeros(s.k, s.k)))
+
+    Ut, St, Vt = svd(T)
+    Vt = Vt'
+
+    U = dot(hcat(X[1], Qu), Ut[:, 1:s.k])
+    V = dot(hcat((X[3]', Qv)), Vt[:, 1:s.k])
+    # We np.spacing(2) was added to the term below.
+    S = St[1:s.k]
+    return (U, S, V')
 end
 
-retr(s::FixedRank, X, U) = _normalize(s, X + U)
+Base.log(s::FixedRank, X, Y) = @assert false "not implemented"
 
-function log(s::FixedRank, X, Y)
-    P = proj(s,X,Y-X)
-    distance = dist(s,X,Y)
-    if dist > 1e-6
-        P *= distance / norm(s,nothing,P)
-    end
-    return P
+function Base.rand(s::FixedRank)
+    u = rand(Steifel(s.m, s.k))
+    s = reverse(sort(rand(s.k)))
+    vt = rand(Steifel(s.n, s.k))'
+    return (u, s, vt)
 end
-
-rand(s::FixedRank) = _normalize(randn(s.d...))
 
 function randvec(s::FixedRank,X)
-    H = randn(s.d...)
-    P = proj(s,X,H)
-    return _normalize(P)
+    Up = randn(s.m, s.k)
+    Vp = randn(s.n, s.k)
+    M = randn(s.k, s.k)
+
+    Z = _tangent(s, X, (Up, M, Vp))
+    nrm = norm(s, X, Z)
+
+    return _TangentVector((Z[1]/nrm, Z[2]/nrm, Z[3]/nrm))
 end
 
-transp(s::FixedRank, X, Y, U) = proj(s, Y, U)
+function _tangent(self, X, Z)
+    Up = Z[1] - dot(X[1], dot(X[1]', Z[1]))
+    Vp = Z[3] - dot(X[3]', dot(X[3], Z[3]))
 
-pairmean(s::FixedRank, X, Y) = _normalize(s, X + Y)
+    return _TangentVector((Up, Z[2], Vp))
+end
 
-_normalize(s::FixedRank, X) = X / norm(s,nothing, X)
+function tangent2ambient(s::FixedRank, X, Z)
+    U = hcat(dot(X[1], Z[2]) + Z[1], X[1])
+    S = eye(2 * s.k)
+    V = hcat([X[3]', Z[3]])
+    return (U, S, V)
+end
+
+pairmean(s::FixedRank, X, Y) = @assert false "not implemented"
+
+transp(s::FixedRank, X1, X2, G) = proj(s, X2, tangent2ambient(s, X1, G))
+
+zerovec(s::FixedRank, X) = _TangentVector((zeros(s.m, s.k), zeros(s.k, s.k), zeros(s.n, s.k)))
+
+struct _TangentVector
+    t::Tuple
+end
+
+function to_ambient(v::_TangentVector, x)
+    Z1 = dot(dot(x[3], v[2]), x[1])
+    Z2 = dot(x[3], v[1])
+    Z3 = dot(x[1], v[3]')
+    return Z1 + Z2 + Z3
+end
+
+# TODO overwrite addition

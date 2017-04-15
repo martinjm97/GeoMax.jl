@@ -1,21 +1,27 @@
 multiprod(A::AbstractMatrix, B::AbstractMatrix) = dot(A,B)
 
-function multiprod(A::AbstractArray{<:Number,3}, B::AbstractArray{<:Number, 3})
-    # Einstein contraction 'ijk,ikl->ijl'
-    X = Array{Any}(size(A,1), size(A,2), size(B,3))
-    for r = 1:size(B,3)
-        for j = 1:size(A,2)
-            for i = 1:size(A,1)
-                s = 0
-                for k = 1:size(A,3)
-                    s += A[i,j,k] * B[i,k,r]
+function multiprod(a::AbstractArray{A,3}, b::AbstractArray{B,3}) where {A,B}
+    c = similar(a, promote_type(A, B), size(a, 1), size(a, 2), size(b, 3))
+    return multiprod!(c, a, b)
+end
+
+function multiprod!(c::AbstractArray{C,3},
+                    a::AbstractArray{<:Number,3},
+                    b::AbstractArray{<:Number,3}) where C<:Number
+    for r = 1:size(c, 3)
+        for j = 1:size(c, 2)
+            for i = 1:size(c, 1)
+                s = zero(C)
+                for k = 1:size(a, 3)
+                    s += a[i,j,k] * b[i,k,r]
                 end
-                X[i,j,r] = s
+                c[i,j,r] = s
             end
         end
     end
-    return X
+    return c
 end
+
 
 # TODO rewrite witH ::AbstractMatrix
 function multitransp(A::AbstractArray)
@@ -33,7 +39,7 @@ function multieye(k,n)
     return repeat(eye(n), (k, 1, 1))
 end
 
-# TODO maybe do type checking of matrices.
+# TODO maybe do type checking of matrices. Split into errors and Hermetian
 function multilog(A::AbstractArray)
     @assert LinAlg.issymmetric(A) "not implemented"
     @assert LinAlg.isposdef(A) "not implemented"

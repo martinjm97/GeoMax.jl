@@ -1,9 +1,12 @@
 struct Stiefel <: AbstractManifold
-    @assert n >= p & p >= 1 "Need n >= p >= 1."
-    @assert k >= 1 "k must be greater than or equal to 1"
     n::Int
     p::Int
     k::Int
+    function Stiefel(n::Int, p::Int, k::Int)
+        @assert n >= p & p >= 1 "Need n >= p >= 1."
+        @assert k >= 1 "k must be greater than or equal to 1"
+        return new(n, p, k)
+    end
 end
 Stiefel(n, p) = Stiefel(n, p, 1)
 
@@ -11,9 +14,9 @@ dim(s::Stiefel) = s.k * (s.n * s.p - 0.5 * s.p * (s.p + 1))
 
 typicaldist(s::Stiefel) = sqrt(s.p * s.k)
 
-inner(s::Stiefel, X, G, H) = dot(G,H)
+inner(s::Stiefel, X, G, H) = vecdot(G,H)
 
-norm(s::Stiefel, X, G) =  norm(G)
+Base.norm(s::Stiefel, X, G) =  norm(G)
 
 function dist(s::Stiefel, U, V)
     @assert false "not implemented"
@@ -32,30 +35,32 @@ function ehess2rhess(s::Stiefel, X, egrad, ehess, H)
     return proj(s, X, ehess - HsymXtG)
 end
 
-# TODO check exp works
-function exp(s::Stiefel, X, U)
+# check exp works
+function Base.exp(s::Stiefel, X, U)
     if s.k == 1
-        m1 = hcat(dot(U, X'), - dot(U, U'))
+        m1 = hcat(dot(U, X'), (-dot(U, U')))
         m2 = hcat(eye(s.p), dot(U, X'))
         W = expm(vcat(m1,m2))
-        Z = vcat(expm(-dot(U,X')), zeros(s.p, s.p))
+        Z = vcat(expm((-dot(U,X')), zeros(s.p, s.p)))
         Y = dot(dot(vcat(X, U), W), Z)
-     else:
-         Y = zeros(size(X))
-         for i=1:s.k
-             m1 = hcat(dot(U[i], X[i]'), - dot(U[i], U[i]'))
-             m2 = hcat(eye(s.p), dot(U[i], X[i]')))
-             W = expm(vcat(m1, m2)
-             Z = vcat(expm(-dot(U[i], X[i]')), zeros(s.p, s.p))
-             Y[i] = dot(dot(vcat(X[i], U[i]), W), Z)
-     return Y
+    else
+        Y = zeros(size(X))
+        for i in 1:s.k
+            m1 = hcat(dot(U[i], X[i]'), - dot(U[i], U[i]'))
+            m2 = hcat(eye(s.p), dot(U[i], X[i]'))
+            W = expm(vcat(m1, m2))
+            Z = vcat(expm((-dot(U[i], X[i]')), zeros(s.p, s.p)))
+            Y[i] = dot(dot(vcat(X[i], U[i]), W), Z)
+        end
+    end
+    return Y
 end
 
 function retr(s::Stiefel, X, G)
     if s.k == 1
         q, r = qr(X + G)
         xNew = dot(q, diag(sign(sign(diag(r))+.5)))
-    else:
+    else
         xNew = X + G
         for i in eachindex(s.k)
             q, r = qr(xNew[i])
@@ -65,11 +70,11 @@ function retr(s::Stiefel, X, G)
     return xNew
 end
 
-function log(s::Stiefel, X, Y)
+function Base.log(s::Stiefel, X, Y)
     @assert false "not implemented"
 end
 
-function rand(s::Stiefel)
+function Base.rand(s::Stiefel)
     if s.k == 1
         X = randn(s.n, s.p)
         q, r = qr(X)

@@ -1,13 +1,14 @@
 module JManOpt
 
 include("tools/multi.jl")
+include("tools/tensorops.jl")
 
 include("manifolds/sphere.jl")
 include("manifolds/grassman.jl")
 include("manifolds/oblique.jl")
 include("manifolds/product.jl")
 
-include("manifolds/euclidian.jl")
+include("manifolds/euclidean.jl")
 include("manifolds/fixed_rank.jl")
 include("manifolds/stiefel.jl")
 include("manifolds/positive_definite.jl")

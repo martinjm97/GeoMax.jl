@@ -11,7 +11,7 @@ typicaldist(s::Sphere) = pi
 
 inner(s::Sphere, X, U, V) = dot(U,V)
 
-norm(s::Sphere, X, U) = norm(U)
+Base.norm(s::Sphere, X, U) = norm(U)
 
 
 function dist(s::Sphere, U, V)
@@ -25,7 +25,7 @@ function ehess2rhess(s::Sphere, X, egrad, ehess, U)
     return proj(s,X,ehess) - inner(s,nothing, X, egrad) * U
 end
 
-function exp(s::Sphere, X, U)
+function Base.exp(s::Sphere, X, U)
     norm_U = norm(s,nothing,U)
     if norm_U > 1e-3
         return X * cos(norm_U) + U * sin(norm_U) / norm_U
@@ -36,7 +36,7 @@ end
 
 retr(s::Sphere, X, U) = _normalize(s, X + U)
 
-function log(s::Sphere, X, Y)
+function Base.log(s::Sphere, X, Y)
     P = proj(s,X,Y-X)
     distance = dist(s,X,Y)
     if dist > 1e-6
@@ -45,7 +45,7 @@ function log(s::Sphere, X, Y)
     return P
 end
 
-rand(s::Sphere) = _normalize(randn(s.d...))
+Base.rand(s::Sphere) = _normalize(randn(s.d...))
 
 function randvec(s::Sphere,X)
     H = randn(s.d...)
