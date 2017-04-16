@@ -8,11 +8,11 @@ notifications:
 sudo: false
 script:
     - if [[ -a .git/shallow ]]; then git fetch --unshallow; fi
-    - julia -e 'include(joinpath(JULIA_HOME, Base.DATAROOTDIR, "julia", "build_sysimg.jl")); build_sysimg(force=true)';
+    #- julia -e 'include(joinpath(JULIA_HOME, Base.DATAROOTDIR, "julia", "build_sysimg.jl")); build_sysimg(force=true)';
     - julia -e 'Pkg.clone(pwd()); Pkg.build("JManOpt"); Pkg.test("JManOpt"; coverage=true)';
     - julia -O3 -e 'include(joinpath(Pkg.dir("JManOpt"), "test/runtests.jl"))';
 after_success:
   # push coverage results to Coveralls
-  - julia -e 'cd(Pkg.dir("JManOpt")); Pkg.add("Coverage"); using Coverage; Coveralls.submit(Coveralls.process_folder())'
+  #- julia -e 'cd(Pkg.dir("JManOpt")); Pkg.add("Coverage"); using Coverage; Coveralls.submit(Coveralls.process_folder())'
   # push coverage results to Codecov
   - julia -e 'cd(Pkg.dir("JManOpt")); Pkg.add("Coverage"); using Coverage; Codecov.submit(Codecov.process_folder())'
