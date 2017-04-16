@@ -1,5 +1,8 @@
 using JManOpt
 using Base.Test
 
-# write your own tests here
-@test 1 == 2
+# Test Sphere
+m = 100
+n = 50
+s = JManOpt.Sphere([m, n])
+@test JManOpt.dim(s) == m * n -1
