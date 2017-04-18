@@ -31,7 +31,7 @@ macro contract!(c_expr, a_expr, b_expr)
         $c_expr = $kernel_result
     end
 
-    # Here, we build up the loop over the `c` indices. 
+    # Here, we build up the loop over the `c` indices.
     # Note our indexing pattern: looping over the left-most
     # index in the inner-most loop, and the second left-most
     # index in the second inner-most loop, etc. This should
@@ -53,16 +53,43 @@ macro contract!(c_expr, a_expr, b_expr)
     return esc(loop)
 end
 
+function tensor_single_dot(a::AbstractArray{<:Real,3},
+                           b::AbstractArray{<:Real,3})
+    c = fill(size(a)[1],size(b)[3])
+    return tensor_double_dot!(c, a, b)
+end
+
 function tensor_single_dot!(c::AbstractArray{<:Real,4},
                             a::AbstractArray{<:Real,3},
                             b::AbstractArray{<:Real,3})
     return @contract!(c[i,j,l,m], a[i,j,k], b[k,l,m])
 end
 
+# same as np.tensordot(x,y)
+function tensor_double_dot(a::AbstractArray{<:Real,3},
+                           b::AbstractArray{<:Real,3})
+    c = fill(size(a)[1],size(b)[3])
+    return tensor_double_dot!(c, a, b)
+end
+# 
+# #TODO make this work as a single funicton
+# function tensor_double_dot(a::AbstractArray{<:Real,2},
+#                            b::AbstractArray{<:Real,2})
+#     c = 0
+#     return tensor_double_dot!(c, a, b)
+# end
+
 function tensor_double_dot!(c::AbstractArray{<:Real,2},
                             a::AbstractArray{<:Real,3},
                             b::AbstractArray{<:Real,3})
     return @contract!(c[i,l], a[i,j,k], b[j,k,l])
 end
+
+# function tensor_double_dot!(c::AbstractArray{<:Real,1},
+#                             a::AbstractArray{<:Real,2},
+#                             b::AbstractArray{<:Real,2})
+#     return @contract!(c, a[i,j], b[i,j])
+# end
+
 
 tensor_full_dot(x, y) = vecdot(x, y)

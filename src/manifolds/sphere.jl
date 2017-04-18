@@ -45,17 +45,17 @@ function Base.log(s::Sphere, X, Y)
     return P
 end
 
-Base.rand(s::Sphere) = _normalize(randn(s.d...))
+Base.rand(s::Sphere) = JManOpt._normalize(s, randn(s.d...))
 
 function randvec(s::Sphere,X)
     H = randn(s.d...)
-    P = proj(s,X,H)
-    return _normalize(P)
+    P = proj(s, X, H)
+    return _normalize(s, P)
 end
 
 transp(s::Sphere, X, Y, U) = proj(s, Y, U)
 
-pairmean(s::Sphere, X, Y) = _normalize(s, X + Y)
+pairmean(s::Sphere, X, Y) = JManOpt._normalize(s, X + Y)
 
 _normalize(s::Sphere, X) = X / norm(s,nothing, X)
 
