@@ -8,7 +8,6 @@ notifications:
 sudo: false
 script:
     - if [[ -a .git/shallow ]]; then git fetch --unshallow; fi
-    #- julia -e 'include(joinpath(JULIA_HOME, Base.DATAROOTDIR, "julia", "build_sysimg.jl")); build_sysimg(force=true)';
     - julia -e 'Pkg.clone(pwd()); Pkg.build("JManOpt"); Pkg.test("JManOpt"; coverage=true)';
     - julia -O3 -e 'include(joinpath(Pkg.dir("JManOpt"), "test/runtests.jl"))';
 after_success:

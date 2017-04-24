@@ -49,7 +49,7 @@ u = JManOpt.randvec(s, x)
 
 u = u * 1e-6
 xretru = JManOpt.retr(s, x, u)
-@test isapprox(JManOpt.retr(s, x, u), x + u)
+@test elementwise_close(JManOpt.retr(s, x, u), x + u)
 
 x = rand(s)
 u = JManOpt.randvec(s, x)
