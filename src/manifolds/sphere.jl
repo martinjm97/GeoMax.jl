@@ -9,9 +9,10 @@ dim(s::Sphere) = prod(s.d) - 1
 
 typicaldist(s::Sphere) = pi
 
-inner(s::Sphere, ::Any, U, V) = vecdot(U, V)
+# TODO: don't list variable names for unused bindings (only types). Example:
+inner(::Sphere, ::Any, U, V) = vecdot(U, V)
 
-Base.norm(s::Sphere, ::Any, U) = norm(U)
+Base.norm(::Sphere, ::Any, U) = norm(U)
 
 function dist(s::Sphere, U, V)
     inner_prod = max(min(inner(s, nothing, U, V), 1), -1)
