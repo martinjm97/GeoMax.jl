@@ -55,7 +55,7 @@ end
 
 function tensor_single_dot(a::AbstractArray{<:Real,3},
                            b::AbstractArray{<:Real,3})
-    c = fill(size(a)[1],size(b)[3])
+    c = similar(a, size(a, 1), size(b, 3))
     return tensor_double_dot!(c, a, b)
 end
 
@@ -68,10 +68,10 @@ end
 # same as np.tensordot(x,y)
 function tensor_double_dot(a::AbstractArray{<:Real,3},
                            b::AbstractArray{<:Real,3})
-    c = fill(size(a)[1],size(b)[3])
+    c = similar(a, size(a, 1), size(b, 3))
     return tensor_double_dot!(c, a, b)
 end
-# 
+#
 # #TODO make this work as a single funicton
 # function tensor_double_dot(a::AbstractArray{<:Real,2},
 #                            b::AbstractArray{<:Real,2})

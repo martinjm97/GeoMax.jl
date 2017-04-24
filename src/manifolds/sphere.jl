@@ -9,20 +9,19 @@ dim(s::Sphere) = prod(s.d) - 1
 
 typicaldist(s::Sphere) = pi
 
-inner(s::Sphere, X, U, V) = dot(U,V)
+inner(s::Sphere, ::Any, U, V) = vecdot(U, V)
 
-Base.norm(s::Sphere, X, U) = norm(U)
-
+Base.norm(s::Sphere, ::Any, U) = norm(U)
 
 function dist(s::Sphere, U, V)
-    inner_prod = max(min(inner(s,nothing, U, V), 1), -1)
+    inner_prod = max(min(inner(s, nothing, U, V), 1), -1)
     return acos(inner_prod)
 end
 
-proj(s::Sphere, X, H) = H - inner(s,nothing, X, H) * X
+proj(s::Sphere, X, H) = H - inner(s, nothing, X, H) * X
 
 function ehess2rhess(s::Sphere, X, egrad, ehess, U)
-    return proj(s,X,ehess) - inner(s,nothing, X, egrad) * U
+    return proj(s, X, ehess) - inner(s, nothing, X, egrad) * U
 end
 
 egrad2rgrad(s::Sphere, x, u) = proj(s, x, u)

@@ -32,13 +32,13 @@ v = JManOpt.randvec(s, x)
 
 #  Construct a random point X on the manifold.
 X = randn(m, n)
-X = X / vecnorm(X)
+X ./= vecnorm(X)
 
-#  Construct a vector H in the ambient space.
+#  Construct a matrix H in the ambient space.
 H = randn(m, n)
 
 #  Compare the projections.
-@test array_almost_equal(H - X * trace(dot(H, X')), JManOpt.egrad2rgrad(s, X, H), 2)
+@test array_almost_equal(H - X * trace(X' * H), JManOpt.egrad2rgrad(s, X, H), 2)
 
 # TODO Test ehess
 # x = rand(s)
