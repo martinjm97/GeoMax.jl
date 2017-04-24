@@ -6,19 +6,19 @@ dim(s::Oblique) = (s.m - 1) * s.n
 
 typicaldist(s::Oblique) = pi * sqrt(s.n)
 
-inner(s::Oblique, X, U, V) = tensor_double_dot(U,V)
+inner(::Oblique, ::Any, U, V) = tensor_double_dot(U,V)
 
-Base.norm(s::Oblique, X, U) = norm(U)
+Base.norm(::Oblique, ::Any, U) = norm(U)
 
-function dist(s::Oblique, X, Y)
+function dist(::Oblique, X, Y)
     XY = sum(X * Y, 1)
     XY[XY .> 1] = 1
     return norm(acos(XY))
 end
 
-proj(s::Oblique, X, H) = H - X * reshape(sum(X * H, 1), (1,size(sum(X * H, 1))...))
+proj(::Oblique, X, H) = H - X * reshape(sum(X * H, 1), (1,size(sum(X * H, 1))...))
 
-egrad2grad(s::Oblique, X, H) = proj(s::Oblique, X, H)
+egrad2grad(s::Oblique, X, H) = proj(s, X, H)
 
 function ehess2rhess(s::Oblique, X, egrad, ehess, U)
     PXehess = proj(s, X, ehess)
@@ -49,7 +49,7 @@ function Base.log(s::Oblique, X, Y)
     return V * factors
 end
 
-Base.rand(s::Oblique) = _normalize_columns(randn(s.d...))
+Base.rand(s::Oblique) = _normalize_columns(randn(s.m, s.n))
 
 function randvec(s::Oblique,X)
     H = randn(size(X)...)

@@ -14,9 +14,9 @@ dim(s::Grassmann) = s.k*(s.n * s.p - s.p^2)
 
 typicaldist(s::Grassmann) = sqrt(s.p, s.k)
 
-inner(s::Grassmann, X, U, V) = full_tensor_dot(U,V)
+inner(::Grassmann, ::Any, U, V) = full_tensor_dot(U,V)
 
-Base.norm(s::Grassmann, X, U) = norm(U)
+Base.norm(::Grassmann, ::Any, U) = norm(U)
 
 function dist(s::Grassmann, X, Y)
     u, s, v = svd(multiprod(multitransp(X), Y))
@@ -25,9 +25,9 @@ function dist(s::Grassmann, X, Y)
     return norm(s)
 end
 
-proj(s::Grassmann, X, U) = U - multiprod(X, multiprod(multitransp(X), U))
+proj(::Grassmann, X, U) = U - multiprod(X, multiprod(multitransp(X), U))
 
-egrad2rgrad(s::Grassmann, X, U) = proj(s, X, U) 
+egrad2rgrad(s::Grassmann, X, U) = proj(s, X, U)
 
 function ehess2rhess(s::Grassmann, X, egrad, ehess, H)
     PXehess = proj(s, X, ehess)
@@ -49,12 +49,12 @@ function Base.exp(s::Grassmann, X, U)
     return Y
 end
 
-function retr(s::Grassmann, X, G)
-    u, s, vt = svd(X + G, full_matrices=False)
+function retr(::Grassmann, X, G)
+    u, s, vt = svd(X + G)
     return multiprod(u, vt)
 end
 
-function Base.log(s::Grassmann, X, Y)
+function Base.log(::Grassmann, X, Y)
     ytx = multiprod(multitransp(Y), X)
     At = multitransp(Y) - multiprod(ytx, multitransp(X))
     Bt = ytx\At
@@ -86,6 +86,6 @@ function randvec(s::Grassmann,X)
     return  U / norm(U)
 end
 
-transp(s::Grassmann, X, Y, U) = proj(s, Y, U)
+transp(s::Grassmann, ::Any, Y, U) = proj(s, Y, U)
 
 pairmean(s::Grassmann, X, Y) = @assert false "Not implemented"

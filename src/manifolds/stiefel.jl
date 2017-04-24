@@ -14,19 +14,19 @@ dim(s::Stiefel) = s.k * (s.n * s.p - 0.5 * s.p * (s.p + 1))
 
 typicaldist(s::Stiefel) = sqrt(s.p * s.k)
 
-inner(s::Stiefel, X, G, H) = vecdot(G,H)
+inner(::Stiefel, ::Any, G, H) = vecdot(G,H)
 
-Base.norm(s::Stiefel, X, G) =  norm(G)
+Base.norm(::Stiefel, ::Any, G) =  norm(G)
 
 function dist(s::Stiefel, U, V)
     @assert false "not implemented"
 end
 
-function proj(s::Stiefel, X, U)
+function proj(::Stiefel, X, U)
     return U - multiprod(X, multisym(multiprod(multitransp(X), U)))
 end
 
-egrad2rgrad(s::Stiefel, X, U) = proj(s::Stiefel, X, U)
+egrad2rgrad(s::Stiefel, X, U) = proj(s, X, U)
 
 function ehess2rhess(s::Stiefel, X, egrad, ehess, H)
     XtG = multiprod(multitransp(X), egrad)
@@ -90,7 +90,7 @@ end
 
 function randvec(s::Stiefel, X)
     U = randn(size(X)...)
-    U = proj(s,X,U)
+    U = proj(s, X, U)
     U = U / norm(U)
     return U
 end

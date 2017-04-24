@@ -7,12 +7,11 @@ end
 
 dim(s::Sphere) = prod(s.d) - 1
 
-typicaldist(s::Sphere) = pi
+typicaldist(::Sphere) = pi
 
-# TODO: don't list variable names for unused bindings (only types). Example:
 inner(::Sphere, ::Any, U, V) = vecdot(U, V)
 
-Base.norm(::Sphere, ::Any, U) = norm(U)
+Base.norm(::Sphere, ::Any, U) = vecnorm(U)
 
 function dist(s::Sphere, U, V)
     inner_prod = max(min(inner(s, nothing, U, V), 1), -1)
@@ -32,22 +31,22 @@ function Base.exp(s::Sphere, X, U)
     if norm_U > 1e-3
         return X * cos(norm_U) + U * sin(norm_U) / norm_U
     else
-        return retr(s,U)
+        return retr(s, X, U)
     end
 end
 
 retr(s::Sphere, X, U) = _normalize(s, X + U)
 
 function Base.log(s::Sphere, X, Y)
-    P = proj(s,X,Y-X)
-    distance = dist(s,X,Y)
-    if dist > 1e-6
+    P = proj(s, X, Y .- X)
+    distance = dist(s, X, Y)
+    if distance > 1e-6
         P *= distance / norm(s,nothing,P)
     end
     return P
 end
 
-Base.rand(s::Sphere) = JManOpt._normalize(s, randn(s.d...))
+Base.rand(s::Sphere) = _normalize(s, randn(s.d...))
 
 function randvec(s::Sphere,X)
     H = randn(s.d...)
@@ -57,7 +56,7 @@ end
 
 transp(s::Sphere, X, Y, U) = proj(s, Y, U)
 
-pairmean(s::Sphere, X, Y) = JManOpt._normalize(s, X + Y)
+pairmean(s::Sphere, X, Y) = _normalize(s, X + Y)
 
 _normalize(s::Sphere, X) = X / norm(s,nothing, X)
 

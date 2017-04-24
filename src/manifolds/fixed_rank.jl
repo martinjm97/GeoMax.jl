@@ -8,19 +8,19 @@ dim(s::FixedRank) = (s.m + s.n - s.k) * s.k
 
 typicaldist(s::FixedRank) = dim(s)
 
-inner(s::FixedRank, X, G, H) = sum(tensor_double_dot(a, b) for (a, b) in zip(G, H))
+inner(::FixedRank, ::Any, G, H) = sum(tensor_double_dot(a, b) for (a, b) in zip(G, H))
 
 Base.norm(s::FixedRank, X, G) = sqrt(inner(s, X, G, G))
 
 dist(s::FixedRank, U, V) = @assert false "not implemented"
 
-_apply_ambient(s::FixedRank, Z::Tuple, W) = dot(Z[1], dot(Z[2], dot(Z[3].T, W)))
+_apply_ambient(::FixedRank, Z::Tuple, W) = dot(Z[1], dot(Z[2], dot(Z[3]', W)))
 
-_apply_ambient(s::FixedRank, Z, W) = dot(Z, W)
+_apply_ambient(::FixedRank, Z, W) = dot(Z, W)
 
-_apply_ambient_transpose(s::FixedRank, Z::Tuple, W) = dot(Z[3], dot(Z[2], dot(Z[1]', W)))
+_apply_ambient_transpose(::FixedRank, Z::Tuple, W) = dot(Z[3], dot(Z[2], dot(Z[1]', W)))
 
-_apply_ambient_transpose(s::FixedRank, Z, W) = dot(Z', W)
+_apply_ambient_transpose(::FixedRank, Z, W) = dot(Z', W)
 
 function proj(s::FixedRank, X, Z)
     ZV = _apply_ambient(s, Z, X[3]')
@@ -44,7 +44,7 @@ function egrad2grad(s::FixedRank, X, egrad)
     Vp = (egrad[3]' - vvtdv) / x[2]
 
     i = eye(s.k)
-    extended_x = reshape(x[2],(1,size(x[2])...))
+    extended_x = reshape(x[2], (1, size(x[2])...))
     f = 1 / (extended_x^2 - extended_x^2 + i)
 
     M = (f * (utdu - utdu.T) * x[2] + extended_x * f * (vtdv - vtdv') + diag(egrad[2]))
@@ -92,7 +92,7 @@ function randvec(s::FixedRank,X)
     return _TangentVector((Z[1]/nrm, Z[2]/nrm, Z[3]/nrm))
 end
 
-function _tangent(self, X, Z)
+function _tangent(::FixedRank, X, Z)
     Up = Z[1] - dot(X[1], dot(X[1]', Z[1]))
     Vp = Z[3] - dot(X[3]', dot(X[3], Z[3]))
 

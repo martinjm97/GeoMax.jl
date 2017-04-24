@@ -7,40 +7,40 @@ dim(s::PositiveDefinite) = s.k * 0.5 * s.n * (s.n + 1)
 
 typicaldist(s::PositiveDefinite) = sqrt(s.k * 0.5 * s.n * (s.n + 1))
 
-inner(s::PositiveDefinite, X, U, V) = full_tensor_dot(X\U, X\V)
+inner(::PositiveDefinite, X, U, V) = full_tensor_dot(X\U, X\V)
 
-Base.norm(s::PositiveDefinite, X, U) = norm(U)
+Base.norm(::PositiveDefinite, ::Any, U) = norm(U)
 
 # make sure the X, c, and c_inv are of positive definite type
 # so that factorize and multilog work
-function dist(s::PositiveDefinite, X, Y)
+function dist(::PositiveDefinite, X, Y)
     c = cholfact(X)
     c_inv = inv(c)
     l = multilog(multiprod(multiprod(c_inv, Y), multitransp(c_inv)))
     return  norm(multiprod(multiprod(c, l), c_inv))
 end
 
-proj(s::PositiveDefinite, X, G) = multisym(G)
+proj(::PositiveDefinite, ::Any, G) = multisym(G)
 
-egrad2grad(s::PositiveDefinite, X, U) = multiprod(multiprod(S, multisym(U)), X)
+egrad2grad(::PositiveDefinite, X, U) = multiprod(multiprod(X, multisym(U)), X)
 
-function ehess2rhess(s::PositiveDefinite, X, egrad, ehess, U)
+function ehess2rhess(::PositiveDefinite, X, egrad, ehess, U)
     return multiprod(multiprod(X, multisym(ehess)), X) + multisym(multiprod(multiprod(U, multisym(egrad)), X))
 end
 
 # make sure the X, c, and c_inv are of positive definite type
 # so that factorize and multilog work
-function Base.exp(s::PositiveDefinite, X, U)
+function Base.exp(::PositiveDefinite, X, U)
     c = la.cholesky(X)
     c_inv = la.inv(c)
     e = multiexp(multiprod(multiprod(c_inv, U), multitransp(c_inv)))
     return multiprod(multiprod(c, e), multitransp(c))
 end
 
-retr(s::PositiveDefinite, X, G) = exp(X, G)
+retr(::PositiveDefinite, X, G) = exp(X, G)
 
 # make sure the X, c, and c_inv are of positive definite type
-function Base.log(s::PositiveDefinite, X, Y)
+function Base.log(::PositiveDefinite, X, Y)
     c = cholfact(X)
     c_inv = inv(c)
     l = multilog(multiprod(multiprod(c_inv, Y), multitransp(c_inv)))
@@ -72,7 +72,7 @@ function randvec(s::PositiveDefinite,X)
     return u / norm(X, u)
 end
 
-transp(s::PositiveDefinite, X, Y, D) = D
+transp(::PositiveDefinite, ::Any, ::Any, D) = D
 
 pairmean(s::PositiveDefinite, X, Y) = @assert false "not implemented"
 
@@ -90,22 +90,22 @@ dim(s::PSDFixedRank) = s.k * s.n - s.k * (s.k - 1) / 2
 
 typicaldist(s::PSDFixedRank) = 10 + s.k
 
-inner(s::PSDFixedRank, X, U, V) = full_tensor_dot(X\U, X\V)
+inner(::PSDFixedRank, X, U, V) = full_tensor_dot(X\U, X\V)
 
-Base.norm(s::PSDFixedRank, X, U) = vecnorm(U)
+Base.norm(::PSDFixedRank, ::Any, U) = vecnorm(U)
 
 dist(s::PSDFixedRank, X, Y) = @assert false "not implemented"
 
-function proj(s::PSDFixedRank, X, G)
+function proj(::PSDFixedRank, X, G)
     YtY = dot(X, X')
     AS = dot(X', G) - dot(G', X)
     Omega = lyap(YtY, AS)
     return H - dot(X, Omega)
 end
 
-egrad2grad(s::PSDFixedRank, X, egrad) = egrad
+egrad2grad(::PSDFixedRank, ::Any, egrad) = egrad
 
-ehess2rhess(s::PSDFixedRank, X, egrad, ehess, U) = proj(s, X, ehess)
+ehess2rhess(s::PSDFixedRank, X, ::Any, ehess, ::Any) = proj(s, X, ehess)
 
 # make sure the X, c, and c_inv are of positive definite type
 # so that factorize and multilog work
@@ -114,7 +114,7 @@ function Base.exp(s::PSDFixedRank, X, U)
     return retr(s, X, U)
 end
 
-retr(s::PSDFixedRank, X, G) = X + U
+retr(::PSDFixedRank, X, G) = X + U
 
 Base.log(s::PSDFixedRank, X, Y) = @assert false "not implemented"
 
@@ -126,7 +126,7 @@ function randvec(s::PSDFixedRank,X)
     return _normalize(s, P)
 end
 
-transp(s::PSDFixedRank, Y, Z, U) = proj(s, Z, U)
+transp(s::PSDFixedRank, ::Any, Z, U) = proj(s, Z, U)
 
 pairmean(s::PSDFixedRank, X, Y) = @assert false "not implemented"
 
@@ -146,7 +146,7 @@ dim(s::PSDFixedRankComplex) = 2 * s.k * s.n - s.k * s.k
 
 typicaldist(s::PSDFixedRankComplex) = 10 + s.k
 
-inner(s::PSDFixedRankComplex, X, U, V) = full_tensor_dot(X\U, X\V)
+inner(::PSDFixedRankComplex, X, U, V) = full_tensor_dot(X\U, X\V)
 
 Base.norm(s::PSDFixedRankComplex, Y, U) = sqrt(inner(s, Y, U, U))
 
@@ -156,16 +156,16 @@ function dist(s::PSDFixedRankComplex, U, V)
     return inner(s, nothing, E, E) / 2
 end
 
-function proj(s::PSDFixedRankComplex, X, G)
+function proj(::PSDFixedRankComplex, X, G)
     YtY = dot(X, X')
     AS = dot(X', G) - dot(G', X)
     Omega = lyap(YtY, AS)
     return H - dot(X, Omega)
 end
 
-egrad2grad(s::PSDFixedRankComplex, X, egrad) = egrad
+egrad2grad(::PSDFixedRankComplex, ::Any, egrad) = egrad
 
-ehess2rhess(s::PSDFixedRankComplex, X, egrad, ehess, U) = proj(s, X, ehess)
+ehess2rhess(s::PSDFixedRankComplex, X, ::Any, ehess, ::Any) = proj(s, X, ehess)
 
 # make sure the X, c, and c_inv are of positive definite type
 # so that factorize and multilog work
@@ -174,7 +174,7 @@ function Base.exp(s::PSDFixedRankComplex, X, U)
     return retr(s, X, U)
 end
 
-retr(s::PSDFixedRankComplex, X, G) = X + U
+retr(::PSDFixedRankComplex, X, G) = X + G
 
 Base.log(s::PSDFixedRankComplex, X, Y) = @assert false "not implemented"
 
@@ -186,7 +186,7 @@ function randvec(s::PSDFixedRankComplex,X)
     return _normalize(s, P)
 end
 
-transp(s::PSDFixedRankComplex, Y, Z, U) = proj(s, Z, U)
+transp(s::PSDFixedRankComplex, ::Any, Z, U) = proj(s, Z, U)
 
 pairmean(s::PSDFixedRankComplex, X, Y) = @assert false "not implemented"
 
@@ -205,7 +205,7 @@ dim(s::Elliptope) = s.n * (s.k - 1) - s.k * (s.k - 1) / 2
 
 typicaldist(s::Elliptope) = 10 * s.k
 
-inner(s::Elliptope, X, U, V) = full_tensor_dot(X\U, X\V)
+inner(::Elliptope, X, U, V) = full_tensor_dot(X\U, X\V)
 
 Base.norm(s::Elliptope, Y, U) = sqrt(inner(s,Y,U,U))
 
@@ -219,11 +219,11 @@ function proj(s::Elliptope, Y, H)
     return eta - dot((Omega - Omega.T) / 2, Y)
 end
 
-egrad2grad(s::Elliptope, Y, egrad) = _project_rows(Y, egrad)
+egrad2grad(s::Elliptope, Y, egrad) = _project_rows(s, Y, egrad)
 
 function ehess2rhess(s::Elliptope, Y, egrad, ehess, U)
-    scaling_grad = sum((egrad * Y),1)
-    hess = ehess - U * reshape(scaling_grad, (1,size(scaling_grad)...))
+    scaling_grad = sum((egrad * Y), 1)
+    hess = ehess - U * reshape(scaling_grad, (1, size(scaling_grad)...))
     scaling_hess = sum((U * egrad + Y * ehess), 1)
     hess -= Y * reshape(scaling_hess, (1, size(scaling_hess)))
     return proj(s, Y, hess)
@@ -234,7 +234,7 @@ function Base.exp(s::Elliptope, X, U)
     return retr(s, X, U)
 end
 
-retr(s::Elliptope, X, G) = X + U
+retr(s::Elliptope, X, G) = X + G
 
 Base.log(s::Elliptope, X, Y) = @assert false "not implemented"
 
@@ -245,13 +245,13 @@ function randvec(s::Elliptope,X)
     return H / norm(s, X, H)
 end
 
-transp(s::Elliptope, Y, Z, U) = proj(s, Z, U)
+transp(s::Elliptope, ::Any, Z, U) = proj(s, Z, U)
 
 pairmean(s::Elliptope, X, Y) = @assert false "not implemented"
 
 __normalize_rows(s::Elliptope, Y) = Y / reshape(norm(s, nothing, Y), (1,size(norm(s, nothing, Y))))
 
-function _project_rows(s::Elliptope,Y,H)
+function _project_rows(::Elliptope,Y,H)
     inners = sum(Y*H, 1)
     return H - Y * reshape(inners, (1, size(inners)))
 end

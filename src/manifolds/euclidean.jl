@@ -10,28 +10,28 @@ dim(s::Euclidean) = prod(size(s)) - 1
 
 typicaldist(s::Euclidean) = sqrt(dim(s))
 
-inner(s::Euclidean, X, U, V) = vecdot(U,V)
+inner(::Euclidean, ::Any, U, V) = vecdot(U,V)
 
-Base.norm(s::Euclidean, X, U) = norm(U)
+Base.norm(::Euclidean, ::Any, U) = norm(U)
 
-dist(s::Euclidean, X, Y) = norm(X .- Y)
+dist(::Euclidean, X, Y) = norm(X .- Y)
 
-proj(s::Euclidean, X, U) = U
+proj(::Euclidean, ::Any, U) = U
 
-egrad2grad(s::Euclidean, X, U) = U
+egrad2grad(::Euclidean, ::Any, U) = U
 
-ehess2rhess(s::Euclidean, X, egrad, ehess, U) = ehess
+ehess2rhess(::Euclidean, ::Any, ::Any, ehess, ::Any) = ehess
 
-Base.exp(s::Euclidean, X, U) = X + U
+Base.exp(::Euclidean, X, U) = X + U
 
-Base.log(s::Euclidean, X, Y) = Y - X
+Base.log(::Euclidean, X, Y) = Y - X
 
-retr(s::Euclidean, X, U) = exp(s::Euclidean, X, U)
+retr(s::Euclidean, X, U) = exp(s, X, U)
 
-Base.rand(s::Euclidean) = randn(s.shape...)
+Base.rand(s::Euclidean) = randn(size(s)...)
 
-function randvec(s::Euclidean,X)
-    Y = rand()
+function randvec(::Euclidean, X)
+    Y = rand(s)
     return Y / norm(X, Y)
 end
 
