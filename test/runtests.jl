@@ -70,7 +70,7 @@ u = JManOpt.randvec(s, x)
 v = JManOpt.randvec(s, x)
 # TODO need tensordot
 #np_testing.assert_almost_equal(np.tensordot(x, u), 0)
-@test isapprox(norm(u - v) > 1e-3)
+@test norm(u - v) > 1e-3
 
 x = rand(s)
 y = rand(s)
