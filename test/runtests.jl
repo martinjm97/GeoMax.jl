@@ -1,4 +1,5 @@
 using JManOpt
+using StaticArrays
 using Base.Test
 
 # function elementwise_close(a, b, tol)
