@@ -7,13 +7,14 @@ using Base.Test
 # end
 # elementwise_close(a, b) = elementwise_close(a, b, 0.01)
 
+# TODO replace this with `isapprox(a, b)` (or `all(isapprox.(a, b))`)
 array_almost_equal(a, b, decimal) = all(abs.(a-b) .< 1.5 * exp10(-decimal))
 array_almost_equal(a, b) = array_almost_equal(a, b, 6)
 
 # Test Sphere
 m = 100
 n = 50
-s = JManOpt.Sphere([m, n])
+s = JManOpt.Sphere(SVector(m, n))
 @test JManOpt.dim(s) == m * n - 1
 @test JManOpt.typicaldist(s) == pi
 x = rand(s)

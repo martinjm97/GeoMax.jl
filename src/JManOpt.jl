@@ -1,5 +1,7 @@
 module JManOpt
 
+using StaticArrays
+
 include("tools/multi.jl")
 include("tools/tensorops.jl")
 

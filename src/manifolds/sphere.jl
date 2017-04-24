@@ -1,8 +1,8 @@
 # maybe in the future add not supported on this type instead of error for unsupported functions
 abstract type AbstractManifold end
 
-struct Sphere <: AbstractManifold
-    d::Vector{Int}
+struct Sphere{N} <: AbstractManifold
+    d::SVector{N,Int}
 end
 
 dim(s::Sphere) = prod(s.d) - 1
