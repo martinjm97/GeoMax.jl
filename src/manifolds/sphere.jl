@@ -25,6 +25,8 @@ function ehess2rhess(s::Sphere, X, egrad, ehess, U)
     return proj(s,X,ehess) - inner(s,nothing, X, egrad) * U
 end
 
+egrad2rgrad(s::Sphere, x, u) = proj(s, x, u)
+
 function Base.exp(s::Sphere, X, U)
     norm_U = norm(s,nothing,U)
     if norm_U > 1e-3

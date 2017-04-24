@@ -26,7 +26,7 @@ function proj(s::Stiefel, X, U)
     return U - multiprod(X, multisym(multiprod(multitransp(X), U)))
 end
 
-egrad2rgrad = proj
+egrad2rgrad(s::Stiefel, X, U) = proj(s::Stiefel, X, U)
 
 function ehess2rhess(s::Stiefel, X, egrad, ehess, H)
     XtG = multiprod(multitransp(X), egrad)

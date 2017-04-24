@@ -1,11 +1,14 @@
 using JManOpt
 using Base.Test
 
-function elementwise_close(a, b, tol)
-    d = a - b
-    return length(d[abs.(d) .< tol]) == prod(size(d))
-end
-elementwise_close(a, b) = elementwise_close(a, b, 0.01)
+# function elementwise_close(a, b, tol)
+#     d = a - b
+#     return length(d[abs.(d) .< tol]) == prod(size(d))
+# end
+# elementwise_close(a, b) = elementwise_close(a, b, 0.01)
+
+array_almost_equal(a, b, decimal) = all(abs.(a-b) .< 1.5 * exp10(-decimal))
+array_almost_equal(a, b) = array_almost_equal(a, b, 6)
 
 # Test Sphere
 m = 100
@@ -33,7 +36,7 @@ X = X / vecnorm(X)
 H = randn(m, n)
 
 #  Compare the projections.
-@test elementwise_close(H - X * trace(dot(H, X')), JManOpt.egrad2rgrad(s, X, H))
+@test array_almost_equal(H - X * trace(dot(H, X')), JManOpt.egrad2rgrad(s, X, H), 2)
 
 # TODO Test ehess
 # x = rand(s)
@@ -49,7 +52,7 @@ u = JManOpt.randvec(s, x)
 
 u = u * 1e-6
 xretru = JManOpt.retr(s, x, u)
-@test elementwise_close(JManOpt.retr(s, x, u), x + u)
+@test array_almost_equal(JManOpt.retr(s, x, u), x + u)
 
 x = rand(s)
 u = JManOpt.randvec(s, x)
@@ -72,23 +75,20 @@ v = JManOpt.randvec(s, x)
 x = rand(s)
 y = rand(s)
 u = JManOpt.randvec(s, x)
-@test elementwise_close(JManOpt.transp(s, x, y, u), JManOpt.proj(s, y, u))
+@test array_almost_equal(JManOpt.transp(s, x, y, u), JManOpt.proj(s, y, u))
 
 
-X = rand(s)
-U = JManOpt.randvec(s, X)
-elementwise_close(U, exp(s, X, log(s, X, U)))
+x = rand(s)
+x = JManOpt.randvec(s, x)
+@test array_almost_equal(u, exp(s, x, log(s, x, u)))
 
-def test_log_exp_inverse(self):
-    s = self.man
-    X = s.rand()
-    U = s.randvec(X)
-    Ulogexp = s.log(X, s.exp(X, U))
-    np_testing.assert_array_almost_equal(U, Ulogexp)
 
-def test_pairmean(self):
-    s = self.man
-    X = s.rand()
-    Y = s.rand()
-    Z = s.pairmean(X, Y)
-    np_testing.assert_array_almost_equal(dist(s, X, Z), dist(s, Y, Z))
+x = rand(s)
+u = randvec(s, x)
+ulogexp = log(s, x, exp(s, x, u))
+@test array_almost_equal(u, ulogexp)
+
+x = rand(s)
+y = rand(s)
+z = pairmean(s, x, y)
+@test array_almost_equal(dist(s, x, z), dist(s, y, z))

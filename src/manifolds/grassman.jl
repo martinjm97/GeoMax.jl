@@ -27,7 +27,7 @@ end
 
 proj(s::Grassmann, X, U) = U - multiprod(X, multiprod(multitransp(X), U))
 
-egrad2rgrad = proj
+egrad2rgrad(s::Grassmann, X, U) = proj(s, X, U) 
 
 function ehess2rhess(s::Grassmann, X, egrad, ehess, H)
     PXehess = proj(s, X, ehess)
@@ -71,7 +71,7 @@ function rand(s::Grassmann)
         q, r = qr(X)
         return q
     end
-    
+
     X = zeros(s.k, s.n, s.p)
 
     for i in 1:s.k
