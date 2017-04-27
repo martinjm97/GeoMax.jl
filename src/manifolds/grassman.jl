@@ -18,11 +18,10 @@ inner(::Grassmann, ::Any, U, V) = full_tensor_dot(U,V)
 
 Base.norm(::Grassmann, ::Any, U) = norm(U)
 
-function dist(s::Grassmann, X, Y)
+function dist(::Grassmann, X, Y)
     u, s, v = svd(multiprod(multitransp(X), Y))
-    s[s .> 1] = 1
-    s = acos(s)
-    return norm(s)
+    s[s .> 1] = one(eltype(s))
+    return norm(acos(s))
 end
 
 proj(::Grassmann, X, U) = U - multiprod(X, multiprod(multitransp(X), U))
