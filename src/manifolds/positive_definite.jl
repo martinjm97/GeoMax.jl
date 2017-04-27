@@ -2,6 +2,7 @@ struct PositiveDefinite <: AbstractManifold
     n::Int
     k::Int
 end
+PositiveDefinite(n) = PositiveDefinite(n, 1)
 
 dim(s::PositiveDefinite) = s.k * 0.5 * s.n * (s.n + 1)
 
@@ -51,9 +52,9 @@ end
 function Base.rand(s::PositiveDefinite)
     d = ones(s.k, s.n, 1) + rand(s.k, s.n, 1)
 
-    u = zeros(s.k, s.n, s.n)
+    #u = zeros(s.k, s.n, s.n)
     for i in 1:s.k
-        u[i], r = qr(randn(s.n, s.n))
+        (u[i], r) = qr(randn(s.n, s.n))
     end
 
     if s.k == 1

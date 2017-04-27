@@ -3,7 +3,6 @@ module JManOpt
 using StaticArrays
 
 include("tools/multi.jl")
-include("tools/tensorops.jl")
 
 include("manifolds/sphere.jl")
 include("manifolds/grassman.jl")

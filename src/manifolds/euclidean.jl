@@ -6,19 +6,19 @@ struct Euclidean <: AbstractManifold
     end
 end
 
-dim(s::Euclidean) = prod(size(s)) - 1
+dim(s::Euclidean) = prod(s.shape)
 
 typicaldist(s::Euclidean) = sqrt(dim(s))
 
 inner(::Euclidean, ::Any, U, V) = vecdot(U,V)
 
-Base.norm(::Euclidean, ::Any, U) = norm(U)
+Base.norm(::Euclidean, ::Any, U) = vecnorm(U)
 
 dist(::Euclidean, X, Y) = norm(X .- Y)
 
 proj(::Euclidean, ::Any, U) = U
 
-egrad2grad(::Euclidean, ::Any, U) = U
+egrad2rgrad(::Euclidean, ::Any, U) = U
 
 ehess2rhess(::Euclidean, ::Any, ::Any, ehess, ::Any) = ehess
 
@@ -28,11 +28,11 @@ Base.log(::Euclidean, X, Y) = Y - X
 
 retr(s::Euclidean, X, U) = exp(s, X, U)
 
-Base.rand(s::Euclidean) = randn(size(s)...)
+Base.rand(s::Euclidean) = randn(s.shape...)
 
-function randvec(::Euclidean, X)
+function randvec(s::Euclidean, X)
     Y = rand(s)
-    return Y / norm(X, Y)
+    return Y / norm(s, X, Y)
 end
 
 transp(s::Euclidean, X1, X2, G) = G
@@ -49,27 +49,27 @@ dim(s::Symmetric) = 0.5 * s.k * s.n * (s.n + 1)
 
 typicaldist(s::Symmetric) = sqrt(dim(s))
 
-inner(s::Symmetric, X, U, V) = vecdot(U,V)
+inner(::Symmetric, ::Any, U, V) = vecdot(U,V)
 
-Base.norm(s::Symmetric, X, U) = norm(U)
+Base.norm(::Symmetric, ::Any, U) = norm(U)
 
-dist(s::Symmetric, X, Y) = norm(X .- Y)
+dist(::Symmetric, ::Any, Y) = norm(X .- Y)
 
-proj(s::Symmetric, X, U) = multisym(U)
+proj(::Symmetric, ::Any, U) = multisym(U)
 
-egrad2grad(s::Symmetric, X, U) = multisym(U)
+egrad2rgrad(::Symmetric, ::Any, U) = multisym(U)
 
-ehess2rhess(s::Symmetric, X, egrad, ehess, U) = multisym(ehess)
+ehess2rhess(::Symmetric, ::Any, ::Any, ehess, ::Any) = multisym(ehess)
 
-Base.exp(s::Symmetric, X, U) = X + U
+Base.exp(::Symmetric, X, U) = X + U
 
-Base.log(s::Symmetric, X, Y) = Y - X
+Base.log(::Symmetric, X, Y) = Y - X
 
 retr(s::Symmetric, X, U) = exp(s::Symmetric, X, U)
 
 Base.rand(s::Symmetric) = multisym(randn(s.shape...))
 
-randvec(s::Symmetric,X) = multisym(Y / norm(X, rand()))
+randvec(s::Symmetric, X) = multisym(Y / norm(X, rand()))
 
 transp(s::Symmetric, X1, X2, G) = G
 
