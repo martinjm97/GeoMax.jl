@@ -18,7 +18,7 @@ inner(::Grassmann, ::Any, U, V) = full_tensor_dot(U,V)
 
 Base.norm(::Grassmann, ::Any, U) = norm(U)
 
-function dist(s::Grassmann, X, Y)
+function dist(::Grassmann, X, Y)
     u, s, v = svd(multiprod(multitransp(X), Y))
     s[s .> 1] = 1
     s = acos(s)
@@ -59,13 +59,12 @@ function Base.log(::Grassmann, X, Y)
     At = multitransp(Y) - multiprod(ytx, multitransp(X))
     Bt = ytx\At
     u, s, vt = svd(multitransp(Bt))
-    arctan_s = reshape(atan(s), size(s)[1:(end-1)...,1,size(s)[end]])
-
-    U = multiprod(u * arctan_s, vt)
+    arctan_s = reshape(atan.(s), (size(s)[1:(end-1)]...,1,size(s)[end]))
+    U = multiprod(u * arctan_s', vt)
     return U
 end
 
-function rand(s::Grassmann)
+function Base.rand(s::Grassmann)
     if s.k == 1
         X = randn(s.n, s.p)
         q, r = qr(X)
