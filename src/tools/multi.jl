@@ -1,5 +1,6 @@
 multiprod(A::AbstractMatrix, B::AbstractMatrix) = dot(A,B)
-
+multiprod(A::Float64, B::AbstractMatrix) = A * B
+multiprod(A::AbstractMatrix, B::Float64) = A * B
 function multiprod(a::AbstractArray{A,3}, b::AbstractArray{B,3}) where {A,B}
     c = similar(a, promote_type(A, B), size(a, 1), size(a, 2), size(b, 3))
     return multiprod!(c, a, b)

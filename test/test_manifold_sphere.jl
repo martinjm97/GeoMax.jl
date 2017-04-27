@@ -1,4 +1,3 @@
-# Test Sphere
 m = 100
 n = 50
 s = JManOpt.Sphere(SVector(m, n))
