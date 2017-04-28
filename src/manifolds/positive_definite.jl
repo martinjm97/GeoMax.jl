@@ -52,9 +52,9 @@ end
 function Base.rand(s::PositiveDefinite)
     d = ones(s.k, s.n, 1) + rand(s.k, s.n, 1)
 
-    #u = zeros(s.k, s.n, s.n)
+    u = zeros(s.k, s.n, s.n)
     for i in 1:s.k
-        (u[i], r) = qr(randn(s.n, s.n))
+        (u[i,:], r) = qr(randn(s.n, s.n))
     end
 
     if s.k == 1
