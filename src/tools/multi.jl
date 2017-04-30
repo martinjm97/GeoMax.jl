@@ -53,8 +53,7 @@ macro contract!(c_expr, a_expr, b_expr)
         end
         i += 1
     end
-
-    return esc(loop)
+    return esc
 end
 
 ################
@@ -86,20 +85,6 @@ function tensor_double_dot!(c::AbstractArray{<:Real,2},
     return @contract!(c[i,l], a[i,j,k], b[j,k,l])
 end
 
-# TODO: fix this
-# function tensor_double_dot(a::AbstractArray{<:Real,2},
-#                            b::AbstractArray{<:Real,2})
-#     c = 0
-#     return tensor_double_dot!(c, a, b)
-# end
-
-# TODO: fix this
-# function tensor_double_dot!(c::AbstractArray{<:Real,1},
-#                             a::AbstractArray{<:Real,2},
-#                             b::AbstractArray{<:Real,2})
-#     return @contract!(c, a[i,j], b[i,j])
-# end
-
 tensor_full_dot(x, y) = vecdot(x, y)
 
 #####################
@@ -109,48 +94,83 @@ tensor_full_dot(x, y) = vecdot(x, y)
 multiprod(A, B) = A * B
 
 function multiprod(a::AbstractArray{A,3}, b::AbstractArray{B,3}) where {A,B}
-    c = similar(a, promote_type(A, B), size(a, 1), size(a, 2), size(b, 3))
-    return multiprod!(c, a, b)
+     c = similar(a, promote_type(A, B), size(a, 1), size(a, 2), size(b, 3))
+     return multiprod!(c, a, b)
 end
 
-function multiprod!(c::AbstractArray{<:Real,3},
-                    a::AbstractArray{<:Real,3},
-                    b::AbstractArray{<:Real,3})
-    return @contract!(c[i, j, r], a[i, j, k], b[i, k, r])
+function multiprod!(c::AbstractArray{C,3},
+                    a::AbstractArray{<:Number,3},
+                    b::AbstractArray{<:Number,3}) where C<:Number
+     for r = 1:size(c, 3)
+        for j = 1:size(c, 2)
+            for i = 1:size(c, 1)
+                s = zero(C)
+                for k = 1:size(a, 3)
+                    s += a[i,j,k] * b[i,k,r]
+                end
+                c[i,j,r] = s
+            end
+         end
+      end
+      return c
 end
+# function multiprod(a::AbstractArray{A,3}, b::AbstractArray{B,3}) where {A,B}
+#     c = zeros(size(a, 1), size(a, 2), size(b, 3))
+#     multiprod!(c, a, b)
+#     return c
+# end
+#
+# function multiprod!(c::AbstractArray{<:Real,3},
+#                     a::AbstractArray{<:Real,3},
+#                     b::AbstractArray{<:Real,3})
+#     @contract!(c[i, j, r], a[i, j, k], b[i, k, r])
+#     return c
+# end
 
 ##################
 # multi* methods #
 ##################
 
-# TODO rewrite with ::AbstractMatrix
-function multitransp(A::AbstractArray)
-    if ndims(A) == 2
-        return A'
-    end
-    return permutedims(A, [1, 3, 2])
-end
+# TODO rewrite without type checking
+multitransp(A::AbstractArray) = permutedims(A, [1, 3, 2])
+multitransp(A::AbstractArray{<:Any, 2}) = A'
 
-function multisym(A::AbstractArray)
-    return 0.5 * (A + multitransp(A))
-end
+multisym(A::AbstractArray) = 0.5 * (A + multitransp(A))
 
 function multieye(k,n)
-    return repeat(eye(n), (k, 1, 1))
+    a = zeros(k,n,n)
+    for i in 1:k
+        a[i,:,:] = eye(n)
+    end
+    return a
 end
 
 # TODO maybe do type checking of matrices. Split into errors and Hermetian
 function multilog(A::AbstractArray)
-    @assert LinAlg.issymmetric(A) "not implemented"
-    @assert LinAlg.isposdef(A) "not implemented"
-    l, v = Linalg.eig(Hermetian(A))
-    l =  reshape(log.(l), (size(l)...,1))
-    return multiprod(v, l * multitransp(v))
+    #@assert LinAlg.issymmetric(A) "not implemented"
+    #@assert LinAlg.isposdef(A) "not implemented"
+    l, v = eig(A)
+    return multiprod(v, log.(l) .* multitransp(v))
 end
 
 function multiexp(A::AbstractArray)
-    @assert LinAlg.issymmetric(A) "not implemented"
-    l, v = Linalg.eig(Hermetian(A))
-    l =  reshape(exp.(l), (size(l)...,1))
-    return multiprod(v, l * multitransp(v))
+    #@assert LinAlg.issymmetric(A) "not implemented"
+    l, v = eig(A)
+    return multiprod(v, exp.(l) .* multitransp(v))
+end
+
+#############################
+# Overwrite eig for tensors #
+#############################
+
+function Base.eig(a::AbstractArray)
+   @assert a[end] == a[end-1] "Last two dimensions must be the same."
+   a = reshape(a, prod(size(a)[1:end-2]),size(a)[end-1:end]...)
+   s = size(a,1)
+   u = [zeros(1) for i in 1:s]
+   v = [zeros(1,1) for i in 1:s]
+   for i in 1:s
+       u[i], v[i] = eig(a[i,:,:])
+   end
+   return reshape(collect(Iterators.flatten(u)),size(a,2),size(a,2))', reshape(collect(Iterators.flatten(v)), 2,2,2)
 end

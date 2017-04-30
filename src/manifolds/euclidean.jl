@@ -14,7 +14,7 @@ inner(::Euclidean, ::Any, U, V) = vecdot(U,V)
 
 Base.norm(::Euclidean, ::Any, U) = vecnorm(U)
 
-dist(::Euclidean, X, Y) = norm(X .- Y)
+dist(::Euclidean, x, y) = vecnorm(x .- y)
 
 proj(::Euclidean, ::Any, U) = U
 
@@ -40,20 +40,20 @@ transp(s::Euclidean, X1, X2, G) = G
 pairmean(s::Euclidean, X, Y) = .5 * (X .+ Y)
 
 struct Symmetric <: AbstractManifold
-    n::Int
-    k::Int
+    shape::Array{Int64,1}
 end
-Symmetric(n) = Symmetric(n,1)
+Symmetric(n::Int64) = Symmetric([1,n])
+Symmetric(k::Int64, n::Int64)= k==1 ? Symmetric(n): Symmetric([k, n, n])
 
-dim(s::Symmetric) = 0.5 * s.k * s.n * (s.n + 1)
+dim(s::Symmetric) = 0.5 * s.shape[1] * s.shape[2] * (s.shape[2] + 1)
 
 typicaldist(s::Symmetric) = sqrt(dim(s))
 
 inner(::Symmetric, ::Any, U, V) = vecdot(U,V)
 
-Base.norm(::Symmetric, ::Any, U) = norm(U)
+Base.norm(::Symmetric, ::Any, U) = vecnorm(U)
 
-dist(::Symmetric, ::Any, Y) = norm(X .- Y)
+dist(::Symmetric, X, Y) = vecnorm(X .- Y)
 
 proj(::Symmetric, ::Any, U) = multisym(U)
 
@@ -69,7 +69,10 @@ retr(s::Symmetric, X, U) = exp(s::Symmetric, X, U)
 
 Base.rand(s::Symmetric) = multisym(randn(s.shape...))
 
-randvec(s::Symmetric, X) = multisym(Y / norm(X, rand()))
+function randvec(s::Symmetric, X)
+    Y = rand(s)
+    return multisym( Y / norm(s, X, Y))
+end
 
 transp(s::Symmetric, X1, X2, G) = G
 

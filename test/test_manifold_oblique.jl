@@ -1,30 +1,19 @@
 m = 100
 n = 50
-s = Oblique(m, n)
+s = JManOpt.Oblique(m, n)
 
-# def test_dim(self):
-
-# def test_typicaldist(self):
-
-# def test_dist(self):
-
-# def test_inner(self):
-
-# def test_proj(self):
-
-# def test_ehess2rhess(self):
-
-# def test_retr(self):
-
-# def test_egrad2rgrad(self):
-
-# def test_norm(self):
-
-# def test_rand(self):
-
-# def test_randvec(self):
-
-# def test_transp(self):
+# test_dim:
+# test_typicaldist
+# test_dist
+# test_inner
+# test_proj
+# test_ehess2rhess
+# test_retr
+# test_egrad2rgra
+# test_norm
+# test_rand
+# test_randvec
+# test_transp
 
 x = rand(s)
 y = rand(s)

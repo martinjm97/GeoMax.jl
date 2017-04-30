@@ -5,7 +5,7 @@ using StaticArrays
 include("tools/multi.jl")
 
 include("manifolds/sphere.jl")
-include("manifolds/grassman.jl")
+include("manifolds/grassmann.jl")
 include("manifolds/oblique.jl")
 include("manifolds/product.jl")
 
