@@ -30,6 +30,25 @@ me = JManOpt.multieye(k,n)
 
 @test isapprox(JManOpt.multilog(100*eye(4)), 4.60517*eye(4), atol = 1e-6)
 
-#TODO more testing of multiexp
+
 a = eye(2)
-@test isapprox(JManOpt.multiexp(a), e .* eye(2))
+@test isapprox(JManOpt.multiexp(a), Base.e .* eye(2))
+
+a = [1 2; 2 4]
+@test isapprox(JManOpt.multiexp(a), [30.4826 58.9653; 58.9653 118.931], atol=1e-3)
+
+a = eye(2)
+@test isapprox(JManOpt.multilog(a), zeros(2,2))
+
+a = 5*eye(3)
+a[1,2] = 4
+a[2,1] = 4
+b = [1.09861  1.09861  0.0;
+    1.09861  1.09861  0.0;
+    0.0      0.0      1.60944]
+@test isapprox(JManOpt.multilog(a), b, atol = 1e-5)
+
+a = JManOpt.multieye(2,2)
+a[1,2,1] = 1
+b = ones(2, 2, 2)
+@test JManOpt.solve(a, b) == [[1.0 1.0; 0.0 0.0],[1.0 1.0; 1.0 1.0]]

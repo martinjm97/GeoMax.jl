@@ -8,7 +8,7 @@ s = JManOpt.Grassmann(n, p, k)
 #TODO log has dimension error maybe svd
 x = rand(s)
 y = rand(s)
-@test isapprox(JManOpt.dist(s, x, y, JManOpt.norm(s, x, log(s, x, y))))
+@test isapprox(JManOpt.dist(s, x, y), JManOpt.norm(s, x, log(s, x, y)))
 
 # Test this function at some randomly generated point.
 x = rand(s)

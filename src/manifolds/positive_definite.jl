@@ -8,17 +8,29 @@ dim(s::PositiveDefinite) = s.k * 0.5 * s.n * (s.n + 1)
 
 typicaldist(s::PositiveDefinite) = sqrt(s.k * 0.5 * s.n * (s.n + 1))
 
-inner(::PositiveDefinite, X, U, V) = full_tensor_dot(X\U, X\V)
+inner(::PositiveDefinite, X, U, V) = tensor_full_dot(solve(X,U), solve(X,V))
 
 Base.norm(::PositiveDefinite, ::Any, U) = norm(U)
 
-# make sure the X, c, and c_inv are of positive definite type
-# so that factorize and multilog work
-function dist(::PositiveDefinite, X, Y)
-    c = cholfact(X)
+# TODO make sure the X, c, and c_inv are of positive definite type
+# so that factorize and check cholfact hermitian checking
+function dist{T}(::PositiveDefinite, X::AbstractArray{T,2}, Y)
+    c = Array(cholfact(X)[:L])
     c_inv = inv(c)
     l = multilog(multiprod(multiprod(c_inv, Y), multitransp(c_inv)))
-    return  norm(multiprod(multiprod(c, l), c_inv))
+    return vecnorm(multiprod(multiprod(c, l), c_inv))
+end
+
+function dist(::PositiveDefinite, X::AbstractArray, Y)
+    c = cholfact(X)
+    c_inv  = zeros(size(c,1), size(c[1],2), size(c[1],2))
+    c_new  = zeros(size(c,1), size(c[1],2), size(c[1],2))
+    for i in 1:size(c,1)
+        c_inv[i,:,:] = inv(c[i])
+        c_new[i,:,:] = c[i]
+    end
+    l = multilog(multiprod(multiprod(c_inv, Y), multitransp(c_inv)))
+    return vecnorm(multiprod(multiprod(c_new, l), c_inv))
 end
 
 proj(::PositiveDefinite, ::Any, G) = multisym(G)
@@ -32,8 +44,8 @@ end
 # make sure the X, c, and c_inv are of positive definite type
 # so that factorize and multilog work
 function Base.exp(::PositiveDefinite, X, U)
-    c = la.cholesky(X)
-    c_inv = la.inv(c)
+    c = Array(cholfact(X)[:L])
+    c_inv = inv(c)
     e = multiexp(multiprod(multiprod(c_inv, U), multitransp(c_inv)))
     return multiprod(multiprod(c, e), multitransp(c))
 end
@@ -42,7 +54,7 @@ retr(::PositiveDefinite, X, G) = exp(X, G)
 
 # make sure the X, c, and c_inv are of positive definite type
 function Base.log(::PositiveDefinite, X, Y)
-    c = cholfact(X)
+    c = Array(cholfact(X)[:L])
     c_inv = inv(c)
     l = multilog(multiprod(multiprod(c_inv, Y), multitransp(c_inv)))
     return multiprod(multiprod(c, l), multitransp(c))
@@ -54,13 +66,13 @@ function Base.rand(s::PositiveDefinite)
 
     u = zeros(s.k, s.n, s.n)
     for i in 1:s.k
-        (u[i,:], r) = qr(randn(s.n, s.n))
+        (u[i,:,:], r) = qr(randn(s.n, s.n))
     end
 
     if s.k == 1
-        return multiprod(u, d * multitransp(u))[1]
+        return multiprod(u, d .* multitransp(u))[1,:,:]
     else
-        return multiprod(u, d * multitransp(u))
+        return multiprod(u, d .* multitransp(u))
     end
 end
 
@@ -70,7 +82,7 @@ function randvec(s::PositiveDefinite,X)
     else
         u = multisym(randn(s.k, s.n, s.n))
     end
-    return u / norm(X, u)
+    return u / norm(s, X, u)
 end
 
 transp(::PositiveDefinite, ::Any, ::Any, D) = D
@@ -91,7 +103,7 @@ dim(s::PSDFixedRank) = s.k * s.n - s.k * (s.k - 1) / 2
 
 typicaldist(s::PSDFixedRank) = 10 + s.k
 
-inner(::PSDFixedRank, X, U, V) = full_tensor_dot(X\U, X\V)
+inner(::PSDFixedRank, X, U, V) = tensor_full_dot(solve(X,U), solve(X,V))
 
 Base.norm(::PSDFixedRank, ::Any, U) = vecnorm(U)
 
@@ -115,7 +127,7 @@ function Base.exp(s::PSDFixedRank, X, U)
     return retr(s, X, U)
 end
 
-retr(::PSDFixedRank, X, G) = X + U
+retr(::PSDFixedRank, X, G) = X + G
 
 Base.log(s::PSDFixedRank, X, Y) = @assert false "not implemented"
 
@@ -147,7 +159,7 @@ dim(s::PSDFixedRankComplex) = 2 * s.k * s.n - s.k * s.k
 
 typicaldist(s::PSDFixedRankComplex) = 10 + s.k
 
-inner(::PSDFixedRankComplex, X, U, V) = full_tensor_dot(X\U, X\V)
+inner(::PSDFixedRankComplex, X, U, V) = tensor_full_dot(solve(X,U), solve(X,V))
 
 Base.norm(s::PSDFixedRankComplex, Y, U) = sqrt(inner(s, Y, U, U))
 
@@ -206,7 +218,7 @@ dim(s::Elliptope) = s.n * (s.k - 1) - s.k * (s.k - 1) / 2
 
 typicaldist(s::Elliptope) = 10 * s.k
 
-inner(::Elliptope, X, U, V) = full_tensor_dot(X\U, X\V)
+inner(::Elliptope, X, U, V) = tensor_full_dot(solve(X,U), solve(X,V))
 
 Base.norm(s::Elliptope, Y, U) = sqrt(inner(s,Y,U,U))
 

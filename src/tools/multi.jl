@@ -150,13 +150,23 @@ function multilog(A::AbstractArray)
     #@assert LinAlg.issymmetric(A) "not implemented"
     #@assert LinAlg.isposdef(A) "not implemented"
     l, v = eig(A)
-    return multiprod(v, log.(l) .* multitransp(v))
+    l = reshape(log.(l), 1, size(l)...)
+    return multiprod(v, l .* v)
+end
+
+function multilog(A::AbstractArray{T,2}) where T
+    #@assert LinAlg.issymmetric(A) "not implemented"
+    #@assert LinAlg.isposdef(A) "not implemented"
+    l, v = eig(A)
+    l = reshape(log.(l), 1, size(l)...)'
+    return multiprod(v, l .* multitransp(v))
 end
 
 function multiexp(A::AbstractArray)
     #@assert LinAlg.issymmetric(A) "not implemented"
     l, v = eig(A)
-    return multiprod(v, exp.(l) .* multitransp(v))
+    l = reshape(exp.(l), 1, size(l)...)'
+    return multiprod(v, l .* multitransp(v))
 end
 
 #############################
@@ -164,7 +174,7 @@ end
 #############################
 
 function Base.eig(a::AbstractArray)
-   @assert a[end] == a[end-1] "Last two dimensions must be the same."
+   @assert size(a)[end] == size(a)[end-1] "Last two dimensions must be the same."
    a = reshape(a, prod(size(a)[1:end-2]),size(a)[end-1:end]...)
    s = size(a,1)
    u = [zeros(1) for i in 1:s]
@@ -172,5 +182,28 @@ function Base.eig(a::AbstractArray)
    for i in 1:s
        u[i], v[i] = eig(a[i,:,:])
    end
-   return reshape(collect(Iterators.flatten(u)),size(a,2),size(a,2))', reshape(collect(Iterators.flatten(v)), 2,2,2)
+   s2 = size(a,2)
+   return reshape(collect(Iterators.flatten(u)), s, s2)', reshape(collect(Iterators.flatten(v)), s, s2, s2)
+end
+
+function solve(a::AbstractArray, b::AbstractArray)
+   @assert size(a)[end] == size(a)[end-1] "Last two dimensions must be the same."
+   a = reshape(a, prod(size(a)[1:end-2]),size(a)[end-1:end]...)
+   s = size(a,1)
+   u = [zeros(1,1) for i in 1:s]
+   for i in 1:s
+       u[i] = a[i,:,:]\b[i,:,:]
+   end
+   return u
+end
+
+function Base.cholfact(a::AbstractArray)
+   @assert size(a)[end] == size(a)[end-1] "Last two dimensions must be the same."
+   a = reshape(a, prod(size(a)[1:end-2]),size(a)[end-1:end]...)
+   s = size(a,1)
+   u = [zeros(1,1) for i in 1:s]
+   for i in 1:s
+       u[i] = Array(cholfact(Hermitian(a[i,:,:]))[:L])
+   end
+   return u
 end

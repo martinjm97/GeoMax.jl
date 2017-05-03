@@ -7,19 +7,16 @@ x = rand(s)
 @test size(x) == (n, n)
 
 # Check symmetry
-@test isapprox(x, multisym(x))
+@test isapprox(x, JManOpt.multisym(x))
 
-#TODO this
-# Check positivity of eigenvalues
-#l = la.eigvalsh(x)
-#assert (l > [0]).all()
+l = eigvals(x)
+@test all(l .> [0])
 
-# TODO this
-x = rand(s)
+x = Hermitian(rand(s))
 u = JManOpt.randvec(s, x)
-#e = sp.linalg.expm(la.solve(x, u))
+e = expm(x\u)
 
-@test isapprox(multiprod(x, e), exp(s, x, u))
+@test isapprox(JManOpt.multiprod(x, e), exp(s, x, u))
 u = u * 1e-6
 @test isapprox(exp(s, x, u), x + u)
 
@@ -28,8 +25,8 @@ u = u * 1e-6
 x = rand(s)
 u = JManOpt.randvec(s, x)
 v = JManOpt.randvec(s, x)
-@test isapprox(multisym(u), u)
-@test isapprox(1, man.norm(x, u))
+@test isapprox(JManOpt.multisym(u), u)
+@test isapprox(1, norm(s, x, u))
 @test vecnorm(u - v) > 1e-3
 
 #--------------------------------
@@ -37,7 +34,7 @@ v = JManOpt.randvec(s, x)
 #--------------------------------
 n = 10
 k = 3
-s = PositiveDefinite(n, k)
+s = JManOpt.PositiveDefinite(n, k)
 
 @test isapprox(JManOpt.dim(s), 0.5 * s.k * s.n * (s.n+1))
 
@@ -46,24 +43,21 @@ s = PositiveDefinite(n, k)
 x = rand(s)
 y = rand(s)
 
-# TODO this
-# d = la.solve(x, y)
-# for i in range(k):
-#     d[i] = sp.linalg.logm(d[i])
-#
-# np_testing.assert_almost_equal(man.dist(x, y), la.norm(d))
+d = JManOpt.solve(x,y)
+d = logm.(d)
+@test isapprox(JManOpt.dist(s, x, y), vecnorm(d))
 
 x = rand(s)
 a, b = randn(2, s.k, s.n, s.n)
-@test isapprox(vecdot(a, b, JManOpt.inner(s, x, multiprod(x, a),multiprod(x, b)))
+@test isapprox(vecdot(a, b), JManOpt.inner(s, x, JManOpt.multiprod(x, a), JManOpt.multiprod(x, b)))
 
 x = rand(s)
 a = randn(s.k, s.n, s.n)
-@test isapprox(JManOpt.proj(s, x, a), multisym(a))
+@test isapprox(JManOpt.proj(s, x, a), JManOpt.multisym(a))
 
 x = rand()
 u = randn(s.k, s.n, s.n)
-@test isapprox(JManOpt.egrad2rgrad(s, x, u),multiprod(multiprod(x, multisym(u)), x))
+@test isapprox(JManOpt.egrad2rgrad(s, x, u),JManOpt.multiprod(JManOpt.multiprod(x, JManOpt.multisym(u)), x))
 
 x = rand(s)
 egrad, ehess = randn(2, s.k, s.n, s.n)
@@ -131,10 +125,8 @@ y = JManOpt.retr(s, x, u)
 # Check symmetry
 @test isapprox(y, multisym(y))
 
-# TODO this
-# Check positivity of eigenvalues
-# l = la.eigvalsh(y)
-# assert (l > [[0]]).all()
+l = eig(y)
+@test all((l .> 0))
 
 u = u * 1e-6
 @test isapprox(JManOpt.retr(s, x, u), x + u)
@@ -144,7 +136,6 @@ y = rand(s)
 u = log(s, x, y)
 @test isapprox(exp(s, x, u), y)
 
-def test_log_exp_inverse(s):
 x = rand(s)
 u = JManOpt.randvec(s, x)
 y = exp(s, x, u)

@@ -8,7 +8,7 @@ typicaldist(s::Oblique) = pi * sqrt(s.n)
 
 inner(::Oblique, ::Any, U, V) = tensor_double_dot(U,V)
 
-Base.norm(::Oblique, ::Any, U) = norm(U)
+Base.norm(::Oblique, ::Any, U) = vecnorm(U)
 
 function dist(::Oblique, X, Y)
     XY = sum(X .* Y, 1)
