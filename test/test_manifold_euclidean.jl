@@ -75,7 +75,7 @@ Z = JManOpt.pairmean(s, X, Y)
 
 k = 5
 n = 10
-s = JManOpt.Symmetric(k, n)
+s = JManOpt.Symmetric(n, k)
 
 @test JManOpt.dim(s) == 0.5 * k * n * (n + 1)
 
@@ -90,13 +90,13 @@ z = JManOpt.randvec(s, x)
 @test isapprox(sum(y .* z), JManOpt.inner(s, x, y, z))
 
 x = rand(s)
-u = randn(k, n, n)
+u = randn(n, n, k)
 @test isapprox(JManOpt.proj(s, x, u), JManOpt.multisym(u))
 
 x = rand(s)
 u = JManOpt.randvec(s, x)
-a = randn(2, k, n, n)
-egrad, ehess = a[1,:,:,:], a[2,:,:,:]
+a = randn(n, n, k, 2)
+egrad, ehess = a[:,:,:,1], a[:,:,:,2]
 @test isapprox(JManOpt.ehess2rhess(s,x, egrad, ehess, u), JManOpt.multisym(ehess))
 
 x = rand(s)
@@ -113,14 +113,14 @@ u = randn(n, n, k)
 
 x = rand(s)
 y = rand(s)
-@test size(x) == (k, n, n)
+@test size(x) == (n, n, k)
 @test isapprox(x, JManOpt.multisym(x))
 @test vecnorm(x - y) > 1e-6
 
 x = rand(s)
 u = JManOpt.randvec(s, x)
 v = JManOpt.randvec(s, x)
-@test size(u) == (k, n, n)
+@test size(u) == (n, n, k)
 @test isapprox(u, JManOpt.multisym(u))
 @test isapprox(vecnorm(u), 1)
 @test vecnorm(u - v) > 1e-6

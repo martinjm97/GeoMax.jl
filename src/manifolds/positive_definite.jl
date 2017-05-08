@@ -10,7 +10,7 @@ typicaldist(s::PositiveDefinite) = sqrt(s.k * 0.5 * s.n * (s.n + 1))
 
 inner(::PositiveDefinite, X, U, V) = tensor_full_dot(solve(X,U), solve(X,V))
 
-Base.norm(::PositiveDefinite, ::Any, U) = norm(U)
+Base.norm(::PositiveDefinite, ::Any, U) = vecnorm(U)
 
 # TODO make sure the X, c, and c_inv are of positive definite type
 # so that factorize and check cholfact hermitian checking
@@ -21,13 +21,14 @@ function dist{T}(::PositiveDefinite, X::AbstractArray{T,2}, Y)
     return vecnorm(multiprod(multiprod(c, l), c_inv))
 end
 
+#TODO FIX THIS
 function dist(::PositiveDefinite, X::AbstractArray, Y)
     c = cholfact(X)
-    c_inv  = zeros(size(c,1), size(c[1],2), size(c[1],2))
-    c_new  = zeros(size(c,1), size(c[1],2), size(c[1],2))
+    c_inv  = zeros(size(c[1],2), size(c[1],2), size(c,1))
+    c_new  = zeros(size(c[1],2), size(c[1],2), size(c,1))
     for i in 1:size(c,1)
-        c_inv[i,:,:] = inv(c[i])
-        c_new[i,:,:] = c[i]
+        c_inv[:,:,i] = inv(c[i])
+        c_new[:,:,i] = c[i]
     end
     l = multilog(multiprod(multiprod(c_inv, Y), multitransp(c_inv)))
     return vecnorm(multiprod(multiprod(c_new, l), c_inv))
@@ -35,7 +36,7 @@ end
 
 proj(::PositiveDefinite, ::Any, G) = multisym(G)
 
-egrad2grad(::PositiveDefinite, X, U) = multiprod(multiprod(X, multisym(U)), X)
+egrad2rgrad(::PositiveDefinite, X, U) = multiprod(multiprod(X, multisym(U)), X)
 
 function ehess2rhess(::PositiveDefinite, X, egrad, ehess, U)
     return multiprod(multiprod(X, multisym(ehess)), X) + multisym(multiprod(multiprod(U, multisym(egrad)), X))
@@ -43,14 +44,25 @@ end
 
 # make sure the X, c, and c_inv are of positive definite type
 # so that factorize and multilog work
-function Base.exp(::PositiveDefinite, X, U)
+function Base.exp(::PositiveDefinite, X::Hermitian, U)
     c = Array(cholfact(X)[:L])
     c_inv = inv(c)
     e = multiexp(multiprod(multiprod(c_inv, U), multitransp(c_inv)))
     return multiprod(multiprod(c, e), multitransp(c))
 end
 
-retr(::PositiveDefinite, X, G) = exp(X, G)
+
+function Base.exp(::PositiveDefinite, X::Array{<:Any,3}, U)
+    c = cholfact(X)
+    c_inv  = zeros(size(c[1],2), size(c[1],2), size(c,1))
+    for i in 1:size(c,1)
+        c_inv[:,:,i] = inv(c[i])
+    end
+    e = multiexp(multiprod(multiprod(c_inv, U), multitransp(c_inv)))
+    return multiprod(multiprod(c, e), multitransp(c))
+end
+
+retr(::PositiveDefinite, X, G) = exp(s, X, G)
 
 # make sure the X, c, and c_inv are of positive definite type
 function Base.log(::PositiveDefinite, X, Y)
@@ -62,15 +74,15 @@ end
 
 # Maybe do type checking instead
 function Base.rand(s::PositiveDefinite)
-    d = ones(s.k, s.n, 1) + rand(s.k, s.n, 1)
+    d = ones(s.n, 1, s.k) + rand(s.n, 1, s.k)
 
-    u = zeros(s.k, s.n, s.n)
+    u = zeros(s.n, s.n, s.k)
     for i in 1:s.k
-        (u[i,:,:], r) = qr(randn(s.n, s.n))
+        u[:,:,i], r = qr(randn(s.n, s.n))
     end
 
     if s.k == 1
-        return multiprod(u, d .* multitransp(u))[1,:,:]
+        return multiprod(u, d .* multitransp(u))[:,:,1]
     else
         return multiprod(u, d .* multitransp(u))
     end
@@ -80,7 +92,7 @@ function randvec(s::PositiveDefinite,X)
     if s.k == 1
         u = multisym(randn(s.n,s.n))
     else
-        u = multisym(randn(s.k, s.n, s.n))
+        u = multisym(randn(s.n, s.n, s.k))
     end
     return u / norm(s, X, u)
 end

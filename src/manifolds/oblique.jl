@@ -53,7 +53,7 @@ Base.rand(s::Oblique) = _normalize_columns(s, randn(s.m, s.n))
 function randvec(s::Oblique,X)
     H = randn(size(X)...)
     P = proj(s, X, H)
-    return P / vecnorm(s, X, P)
+    return P / norm(s, X, P)
 end
 
 transp(s::Oblique, X, Y, U) = proj(s, Y, U)

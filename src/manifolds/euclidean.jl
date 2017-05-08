@@ -42,10 +42,10 @@ pairmean(s::Euclidean, X, Y) = .5 * (X .+ Y)
 struct Symmetric <: AbstractManifold
     shape::Array{Int64,1}
 end
-Symmetric(n::Int64) = Symmetric([1,n])
-Symmetric(k::Int64, n::Int64)= k==1 ? Symmetric(n): Symmetric([k, n, n])
+Symmetric(n::Int64) = Symmetric([n, 1])
+Symmetric(n::Int64, k::Int64)= k==1 ? Symmetric(n): Symmetric([n, n, k])
 
-dim(s::Symmetric) = 0.5 * s.shape[1] * s.shape[2] * (s.shape[2] + 1)
+dim(s::Symmetric) = 0.5 * s.shape[3] * s.shape[2] * (s.shape[2] + 1)
 
 typicaldist(s::Symmetric) = sqrt(dim(s))
 

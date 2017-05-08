@@ -91,24 +91,27 @@ tensor_full_dot(x, y) = vecdot(x, y)
 # multiprod methods #
 #####################
 
-multiprod(A, B) = A * B
+multiprod(A::AbstractArray{T1,2}, B::AbstractArray{T2,2}) where {T1,T2} = A * B
+multiprod(A::AbstractArray{T1,3}, B::AbstractArray{T2,2}) where {T1,T2} = A .* B
+
+multiprod(A::AbstractArray{T1,2}, B::AbstractArray{T2,3}) where {T1,T2} = multiprod(B,A)
 
 function multiprod(a::AbstractArray{A,3}, b::AbstractArray{B,3}) where {A,B}
-     c = similar(a, promote_type(A, B), size(a, 1), size(a, 2), size(b, 3))
+     c = similar(a, promote_type(A, B), size(a, 1), size(b, 2), size(a, 3))
      return multiprod!(c, a, b)
 end
 
 function multiprod!(c::AbstractArray{C,3},
                     a::AbstractArray{<:Number,3},
                     b::AbstractArray{<:Number,3}) where C<:Number
-     for r = 1:size(c, 3)
-        for j = 1:size(c, 2)
-            for i = 1:size(c, 1)
-                s = zero(C)
-                for k = 1:size(a, 3)
-                    s += a[i,j,k] * b[i,k,r]
+     for r = 1:size(a, 3)
+        for i = 1:size(a, 1)
+            for k = 1:size(b, 2)
+                s = 0
+                for j = 1:size(a, 2)
+                    s += a[i,j,r] * b[j,k,r]
                 end
-                c[i,j,r] = s
+                c[i,k,r] = s
             end
          end
       end
@@ -131,36 +134,42 @@ end
 # multi* methods #
 ##################
 
-# TODO rewrite without type checking
-multitransp(A::AbstractArray) = permutedims(A, [1, 3, 2])
+multitransp(A::AbstractArray) = permutedims(A, [2, 1, 3])
 multitransp(A::AbstractArray{<:Any, 2}) = A'
 
 multisym(A::AbstractArray) = 0.5 * (A + multitransp(A))
 
 function multieye(k,n)
-    a = zeros(k,n,n)
-    for i in 1:k
-        a[i,:,:] = eye(n)
-    end
-    return a
+    A = zeros(n,n,k)
+    multieye!(A)
 end
 
-# TODO maybe do type checking of matrices. Split into errors and Hermetian
+multieye!(A) = mapslices(eye, A, (1,2))
+    # a = zeros(k,n,n)
+    # for i in 1:k
+    #     a[:,:,i] = eye(n)
+    # end
+    # return a
+# end
+
+# TODO maybe do type checking of matrices. Split into errors and Hermitian
 function multilog(A::AbstractArray)
     #@assert LinAlg.issymmetric(A) "not implemented"
     #@assert LinAlg.isposdef(A) "not implemented"
     l, v = eig(A)
-    l = reshape(log.(l), 1, size(l)...)
-    return multiprod(v, l .* v)
+    q = reshape(log.(l), 1, size(l)...)
+    return multiprod(v, multitransp(v .* q))
+#    l = reshape(log.(l'), 1, size(l)...)
+#    return multiprod(v, l .* v)
 end
 
-function multilog(A::AbstractArray{T,2}) where T
-    #@assert LinAlg.issymmetric(A) "not implemented"
-    #@assert LinAlg.isposdef(A) "not implemented"
-    l, v = eig(A)
-    l = reshape(log.(l), 1, size(l)...)'
-    return multiprod(v, l .* multitransp(v))
-end
+# function multilog(A::AbstractArray{T,2}) where T
+#     #@assert LinAlg.issymmetric(A) "not implemented"
+#     #@assert LinAlg.isposdef(A) "not implemented"
+#     l, v = eig(A)
+#     l = reshape(log.(l), size(l)..., 1)'
+#     return multiprod(v, collect(Iterators.flatten(l)) .* multitransp(v))
+# end
 
 function multiexp(A::AbstractArray)
     #@assert LinAlg.issymmetric(A) "not implemented"
@@ -173,37 +182,35 @@ end
 # Overwrite eig for tensors #
 #############################
 
+## TODO FIX PIRACY
 function Base.eig(a::AbstractArray)
-   @assert size(a)[end] == size(a)[end-1] "Last two dimensions must be the same."
-   a = reshape(a, prod(size(a)[1:end-2]),size(a)[end-1:end]...)
-   s = size(a,1)
-   u = [zeros(1) for i in 1:s]
-   v = [zeros(1,1) for i in 1:s]
-   for i in 1:s
-       u[i], v[i] = eig(a[i,:,:])
-   end
-   s2 = size(a,2)
-   return reshape(collect(Iterators.flatten(u)), s, s2)', reshape(collect(Iterators.flatten(v)), s, s2, s2)
+    s1, s2, s3 = size(a)
+    @assert s1 == s2 "First two dimensions must be the same."
+    a = mapslices(eig, a, (1,2))
+    l = zeros(s1, s3)
+    v = zeros(s1, s2, s3)
+    for i in 1:s3
+        l[:,i],v[:,:,i] = a[:,:,i][1]
+    end
+    return l,v
 end
 
-function solve(a::AbstractArray, b::AbstractArray)
-   @assert size(a)[end] == size(a)[end-1] "Last two dimensions must be the same."
-   a = reshape(a, prod(size(a)[1:end-2]),size(a)[end-1:end]...)
-   s = size(a,1)
-   u = [zeros(1,1) for i in 1:s]
+function solve(a::AbstractArray{A,3}, b::AbstractArray{B,3}) where {A,B}
+   s = size(a,3)
+   u = zeros(size(a)...)
    for i in 1:s
-       u[i] = a[i,:,:]\b[i,:,:]
+       u[:,:,i] = a[:,:,i]\b[:,:,i]
    end
    return u
 end
 
 function Base.cholfact(a::AbstractArray)
-   @assert size(a)[end] == size(a)[end-1] "Last two dimensions must be the same."
-   a = reshape(a, prod(size(a)[1:end-2]),size(a)[end-1:end]...)
-   s = size(a,1)
-   u = [zeros(1,1) for i in 1:s]
+   @assert size(a,1) == size(a,2) "First two dimensions must be the same."
+   #a = reshape(a, prod(size(a)[1:end-2]),size(a)[end-1:end]...)
+   s = size(a,3)
+   u = zeros(size(a)...)
    for i in 1:s
-       u[i] = Array(cholfact(Hermitian(a[i,:,:]))[:L])
+       u[:,:,i] = Array(cholfact(Hermitian(a[:,:,i]))[:L])
    end
    return u
 end

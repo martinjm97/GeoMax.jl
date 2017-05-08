@@ -16,7 +16,7 @@ typicaldist(s::Grassmann) = sqrt(s.p, s.k)
 
 inner(::Grassmann, ::Any, U, V) = full_tensor_dot(U,V)
 
-Base.norm(::Grassmann, ::Any, U) = norm(U)
+Base.norm(::Grassmann, ::Any, U) = vecnorm(U)
 
 function dist(::Grassmann, X, Y)
     u, s, v = svd(multiprod(multitransp(X), Y))
@@ -81,7 +81,7 @@ end
 function randvec(s::Grassmann,X)
     U = randn(size(X)...)
     U = proj(s, X, U)
-    return  U / norm(U)
+    return  U / vecnorm(U)
 end
 
 transp(s::Grassmann, ::Any, Y, U) = proj(s, Y, U)
