@@ -20,7 +20,7 @@
 # #        egrad = p.egrad
 # #    end
 # #    return nothing
-# # TODO: figure out how manifolds work
+# # TODO: grad compute works
 # # can do this without using the gradient!
 # #        grad(x) = p.manifold.egrad2rgrad(x, egrad(x))
 # #        self._grad = grad

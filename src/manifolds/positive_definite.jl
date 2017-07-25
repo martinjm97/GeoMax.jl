@@ -53,11 +53,11 @@ end
 
 
 function Base.exp(::PositiveDefinite, X::Array{<:Any,3}, U)
-    c = cholfact(X)
-    c_inv  = zeros(size(c[1],2), size(c[1],2), size(c,1))
-    for i in 1:size(c,1)
-        c_inv[:,:,i] = inv(c[i])
-    end
+        c = cholfact(X)
+        c_inv  = zeros(size(c[1],2), size(c[1],2), size(c,1))
+        for i in 1:size(c,1)
+            c_inv[:,:,i] = inv(c[i])
+        end
     e = multiexp(multiprod(multiprod(c_inv, U), multitransp(c_inv)))
     return multiprod(multiprod(c, e), multitransp(c))
 end

@@ -1,6 +1,6 @@
 m = 100
 n = 50
-s = JManOpt.Oblique(m, n)
+s = GeoMax.Oblique(m, n)
 
 # test_dim:
 # test_typicaldist
@@ -19,10 +19,10 @@ x = rand(s)
 y = rand(s)
 u = log(s, x, y)
 z = exp(s, x, u)
-#@test isapprox(0, JManOpt.dist(s, y, z), atol = 1e-6)
+#@test isapprox(0, GeoMax.dist(s, y, z), atol = 1e-6)
 
 x = rand(s)
-u = JManOpt.randvec(s, x)
+u = GeoMax.randvec(s, x)
 y = exp(s, x, u)
 v = log(s, x, y)
 # Check that the manifold difference between the tangent vectors u and
@@ -31,5 +31,5 @@ v = log(s, x, y)
 
 X = rand(s)
 Y = rand(s)
-Z = JManOpt.pairmean(s, X, Y)
-@test isapprox(JManOpt.dist(s, X, Z), JManOpt.dist(s, Y, Z))
+Z = GeoMax.pairmean(s, X, Y)
+@test isapprox(GeoMax.dist(s, X, Z), GeoMax.dist(s, Y, Z))

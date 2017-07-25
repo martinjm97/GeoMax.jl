@@ -1,4 +1,4 @@
-module JManOpt
+module GeoMax
 
 using StaticArrays
 
